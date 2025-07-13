@@ -1,0 +1,17 @@
+###INDEX: 1
+Dit is de eerste set tekst.
+Het kan meerdere regels beslaan.
+Dit is een voorbeeld van hoe je
+een tekst kunt opslaan die over
+verschillende regels verdeeld is.
+
+###INDEX: 2
+Dit is de tekst voor het tweede item.
+Deze tekst is ook meerdere regels lang.
+Je kunt hier allerlei informatie opslaan,
+zoals notities, code snippets,
+of definities.
+
+###INDEX: 3
+Een korter stukje tekst
+dat hoort bij index 3.

@@ -1,0 +1,11 @@
+*.code-workspace
+*.vscode
+*.sublime-workspace
+*.sublime-project
+pietjepuk
+*-artifact-*
+*.log
+*.tmp
+*.bak
+*.swp
+.ssh

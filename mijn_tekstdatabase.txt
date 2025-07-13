@@ -15,3 +15,9 @@ of definities.
 ###INDEX: 3
 Een korter stukje tekst
 dat hoort bij index 3.
+
+
+###INDEX: 4
+Dit is tekst voorbeel nummer 4
+Deze tekst bestaat uit 3 regels
+regel3

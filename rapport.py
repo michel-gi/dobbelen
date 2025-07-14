@@ -1,8 +1,7 @@
-# Dit is een nieuw bestand: rapport.py
 # Zorg ervoor dat dit bestand in dezelfde map staat als tekstlezer.py
 
-# We importeren alleen de TextDatabase class uit de 'tekstlezer' module.
-from tekstlezer import TextDatabase
+# We importeren alleen de TextDatabase class uit de 'database' module.
+from database import TextDatabase
 
 def maak_rapport():
     """

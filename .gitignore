@@ -10,3 +10,4 @@ pietjepuk
 *.bak
 *.swp
 .ssh
+__pycache__/*

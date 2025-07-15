@@ -7,7 +7,7 @@ def main():
     db = TextDatabase("mijn_tekstdatabase.txt")
 
     print("\nVoer een nummer in om tekst te zien.")
-    print("Typ 'nieuw' om een item toe te voegen, 'wijzig' om een item te wijzigen, 'stop' om te eindigen, of druk op Ctrl+C.")
+    print("Typ 'nieuw', 'wijzig', 'verwijder' of 'stop' om te eindigen, of druk op Ctrl+C.")
 
     while True:
         try:
@@ -19,16 +19,20 @@ def main():
                 break
 
             elif invoer_lower == 'nieuw':
-                print("Voer de nieuwe tekst in. Typ 'EINDE_TEKST' op een nieuwe regel om op te slaan.")
+                print("Voer de nieuwe tekst in. Laat een lege regel achter om op te slaan.")
                 nieuwe_tekst_regels = []
                 while True:
                     regel = input()
-                    if regel.upper() == 'EINDE_TEKST':
+                    if not regel.strip():  # Controleer op een lege regel (na het strippen van whitespace)
                         break
                     nieuwe_tekst_regels.append(regel)
                 
                 nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
-                db.voeg_tekst_toe(nieuwe_tekst)
+                if db.voeg_tekst_toe(nieuwe_tekst):
+                    print("Tekst succesvol toegevoegd.")
+                    print(f"Totaal aantal items in de database nu: {len(db.data)}")
+                else:
+                    print("Fout: Kon de nieuwe tekst niet opslaan.")
                 continue
 
             elif invoer_lower == 'wijzig':
@@ -38,19 +42,52 @@ def main():
                         print(f"Fout: Geen tekst gevonden voor index {index_nummer}.")
                         continue
 
-                    print("Voer de nieuwe tekst in. Typ 'EINDE_TEKST' op een nieuwe regel om op te slaan.")
+                    # Toon de huidige tekst ter bevestiging en voor copy/paste
+                    huidige_tekst = db.get_tekst(index_nummer)
+                    print(f"\n--- Huidige tekst voor index {index_nummer} ---")
+                    print(huidige_tekst)
+                    print("--- Einde huidige tekst ---")
+                    print("\nVoer nu de nieuwe tekst in. Laat een lege regel achter om op te slaan.")
+
                     nieuwe_tekst_regels = []
                     while True:
                         regel = input()
-                        if regel.upper() == 'EINDE_TEKST':
+                        if not regel.strip():
                             break
                         nieuwe_tekst_regels.append(regel)
                     nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
-                    if not db.wijzig_tekst(index_nummer, nieuwe_tekst):
+                    if db.wijzig_tekst(index_nummer, nieuwe_tekst):
+                        print(f"Tekst voor index {index_nummer} succesvol gewijzigd.")
+                    else:
                         print(f"Fout: Kon tekst voor index {index_nummer} niet wijzigen.")
                 except ValueError:
                     print("Ongeldige invoer voor indexnummer. Voer een getal in.")
                     continue
+                continue
+
+            elif invoer_lower == 'verwijder':
+                try:
+                    index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt verwijderen: "))
+                    if index_nummer not in db.data:
+                        print(f"Fout: Geen tekst gevonden voor index {index_nummer}.")
+                        continue
+
+                    # Toon de te verwijderen tekst ter bevestiging
+                    huidige_tekst = db.get_tekst(index_nummer)
+                    print(f"\n--- Tekst voor index {index_nummer} die verwijderd wordt ---")
+                    print(huidige_tekst)
+                    print("--- Einde tekst ---")
+
+                    bevestiging = input("Weet u zeker dat u dit item wilt verwijderen? (ja/nee): ")
+                    if bevestiging.lower() == 'ja':
+                        if db.verwijder_tekst(index_nummer):
+                            print(f"Item {index_nummer} succesvol verwijderd.")
+                            print(f"Totaal aantal items in de database nu: {len(db.data)}")
+                        else:
+                            print(f"Fout: Kon item {index_nummer} niet verwijderen.")
+                except ValueError:
+                    print("Ongeldige invoer voor indexnummer. Voer een getal in.")
+                continue
 
             index_nummer = int(gebruikers_invoer)
             tekst = db.get_tekst(index_nummer)

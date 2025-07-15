@@ -42,6 +42,20 @@ class TextDatabase:
                 geindexeerde_data[index_nummer] = tekst
         return geindexeerde_data
 
+    def _schrijf_bestand(self):
+        """Interne methode om de volledige dataset naar het bestand te schrijven."""
+        try:
+            with open(self.bestandsnaam, 'w', encoding='utf-8') as f:
+                # Sorteer op index voor een voorspelbare volgorde in het bestand
+                for index, tekst in sorted(self.data.items()):
+                    f.write(f"###INDEX: {index}\n")
+                    f.write(tekst)
+                    f.write("\n\n")
+            return True
+        except IOError as e:
+            print(f"Fout bij schrijven naar '{self.bestandsnaam}': {e}")
+            return False
+
     def get_tekst(self, index_nummer):
         """Haalt een tekst op basis van indexnummer uit het geheugen."""
         return self.data.get(index_nummer)
@@ -58,3 +72,21 @@ class TextDatabase:
             self.data[index_nummer] = nieuwe_tekst
             return self._schrijf_bestand()
         return False
+
+    def verwijder_tekst(self, index_nummer):
+        """
+        Verwijdert een tekst op basis van indexnummer en hernummert de volgende items.
+        """
+        if index_nummer not in self.data:
+            return False
+
+        # Verwijder het gevraagde item
+        del self.data[index_nummer]
+
+        # Haal de overgebleven teksten, gesorteerd op hun oude index
+        sorted_values = [v for k, v in sorted(self.data.items())]
+        # Bouw een compleet nieuwe dictionary op met een compacte, nieuwe index
+        self.data = {i: text for i, text in enumerate(sorted_values, 1)}
+
+        # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
+        return self._schrijf_bestand()

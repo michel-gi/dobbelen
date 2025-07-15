@@ -13,11 +13,24 @@ zoals notities, code snippets,
 of definities.
 
 ###INDEX: 3
-Een korter stukje tekst
-dat hoort bij index 3.
-
+Dit is de nieuwe tekst
+voor item 3
 
 ###INDEX: 4
-Dit is tekst voorbeel nummer 4
-Deze tekst bestaat uit 3 regels
-regel3
+Dit is een wijziging voor item 5
+
+###INDEX: 5
+Dit is de nieuwere tekst voor item 6
+
+###INDEX: 6
+Ik test hiermee de code wijziging 
+voor het toevoegen
+van nieuwe tekst
+
+###INDEX: 7
+Ook even de lege regel testen 
+voor nieuwe items
+
+###INDEX: 8
+nog maar een blokje tekst toevoegen
+

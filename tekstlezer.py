@@ -7,7 +7,7 @@ def main():
     db = TextDatabase("mijn_tekstdatabase.txt")
 
     print("\nVoer een nummer in om tekst te zien.")
-    print("Typ 'nieuw' om een item toe te voegen, 'stop' om te eindigen, of druk op Ctrl+C.")
+    print("Typ 'nieuw' om een item toe te voegen, 'wijzig' om een item te wijzigen, 'stop' om te eindigen, of druk op Ctrl+C.")
 
     while True:
         try:
@@ -30,6 +30,27 @@ def main():
                 nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
                 db.voeg_tekst_toe(nieuwe_tekst)
                 continue
+
+            elif invoer_lower == 'wijzig':
+                try:
+                    index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt wijzigen: "))
+                    if index_nummer not in db.data:
+                        print(f"Fout: Geen tekst gevonden voor index {index_nummer}.")
+                        continue
+
+                    print("Voer de nieuwe tekst in. Typ 'EINDE_TEKST' op een nieuwe regel om op te slaan.")
+                    nieuwe_tekst_regels = []
+                    while True:
+                        regel = input()
+                        if regel.upper() == 'EINDE_TEKST':
+                            break
+                        nieuwe_tekst_regels.append(regel)
+                    nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
+                    if not db.wijzig_tekst(index_nummer, nieuwe_tekst):
+                        print(f"Fout: Kon tekst voor index {index_nummer} niet wijzigen.")
+                except ValueError:
+                    print("Ongeldige invoer voor indexnummer. Voer een getal in.")
+                    continue
 
             index_nummer = int(gebruikers_invoer)
             tekst = db.get_tekst(index_nummer)

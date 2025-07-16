@@ -23,14 +23,9 @@ Dit is een wijziging voor item 5
 Dit is de nieuwere tekst voor item 6
 
 ###INDEX: 6
-Ik test hiermee de code wijziging 
-voor het toevoegen
-van nieuwe tekst
+nog maar een blokje tekst toevoegen
 
 ###INDEX: 7
-Ook even de lege regel testen 
-voor nieuwe items
-
-###INDEX: 8
-nog maar een blokje tekst toevoegen
+Deze is ingevoerd op positie 9
+extra regel
 

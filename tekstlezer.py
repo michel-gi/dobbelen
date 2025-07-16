@@ -78,13 +78,26 @@ def main():
                     print(huidige_tekst)
                     print("--- Einde tekst ---")
 
-                    bevestiging = input("Weet u zeker dat u dit item wilt verwijderen? (ja/nee): ")
-                    if bevestiging.lower() == 'ja':
-                        if db.verwijder_tekst(index_nummer):
-                            print(f"Item {index_nummer} succesvol verwijderd.")
-                            print(f"Totaal aantal items in de database nu: {len(db.data)}")
+                    while True:
+                        bevestiging = input(f"Weet u zeker dat u item {index_nummer} wilt verwijderen? (j/n): ")
+                        antwoord = bevestiging.strip().lower()
+
+                        if not antwoord: # Gebruiker heeft alleen op Enter gedrukt
+                            print("Ongeldige invoer. Voer 'j' of 'n' in.")
+                            continue
+
+                        if antwoord.startswith('j'):
+                            if db.verwijder_tekst(index_nummer):
+                                print(f"Item {index_nummer} succesvol verwijderd.")
+                                print(f"Totaal aantal items in de database nu: {len(db.data)}")
+                            else:
+                                print(f"Fout: Kon item {index_nummer} niet verwijderen.")
+                            break # Verlaat de bevestigingslus
+                        elif antwoord.startswith('n'):
+                            print(f"Verwijdering van item {index_nummer} geannuleerd.")
+                            break # Verlaat de bevestigingslus
                         else:
-                            print(f"Fout: Kon item {index_nummer} niet verwijderen.")
+                            print("Ongeldige invoer. Voer 'j' of 'n' in.")
                 except ValueError:
                     print("Ongeldige invoer voor indexnummer. Voer een getal in.")
                 continue

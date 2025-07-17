@@ -20,10 +20,10 @@ voor item 3
 Dit is een wijziging voor item 5
 
 ###INDEX: 5
-Dit is de nieuwere tekst voor item 6
+
 
 ###INDEX: 6
-nog maar een blokje tekst toevoegen
+2e regel
 
 ###INDEX: 7
 Deze is ingevoerd op positie 9
@@ -37,4 +37,8 @@ bla die bla
 
 ###INDEX: 10
 item 11
+
+###INDEX: 11
+extra regel
+.
 

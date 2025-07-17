@@ -1,24 +1,37 @@
 # Importeer de class uit de nieuwe module
 from database import TextDatabase
 
+def toon_menu():
+    """Toont het hoofdmenu met beschikbare opties."""
+    print("\nVoer een itemnummer in om de bijbehorende tekst te zien.")
+    print("Of kies een van de volgende menu opties:\n")
+    print("[n]ieuw   - invoeren van een nieuw tekst item")
+    print("[w]ijzig  - wijzigen van een bestaand tekst item")
+    print("[v]erwijder - verwijderen van een tekst item")
+    print("[s]top   - beëindig dit programma")
+    print("[m]enu   - dit menu opnieuw weergeven")
+
 def main():
     """Hoofdfunctie voor de gebruikersinteractie."""
     # Maak één database object aan. Alle operaties gaan via dit object.
+
     db = TextDatabase("mijn_tekstdatabase.txt")
-
-    print("\nVoer een nummer in om tekst te zien.")
-    print("Typ 'nieuw', 'wijzig', 'verwijder' of 'stop' om te eindigen, of druk op Ctrl+C.")
-
+    toon_menu()  # Toon het menu direct bij de start
+    
     while True:
         try:
             gebruikers_invoer = input("\nVoer een commando of nummer in: ")
             invoer_lower = gebruikers_invoer.lower()
 
-            if invoer_lower == 'stop':
+            if invoer_lower == 'stop' or invoer_lower == 's':
                 print("Programma gestopt.")
                 break
 
-            elif invoer_lower == 'nieuw':
+            elif invoer_lower == 'menu' or invoer_lower == 'm':
+                toon_menu()  # Menu opnieuw tonen
+                continue
+
+            elif invoer_lower == 'nieuw' or invoer_lower == 'n':
                 print("Voer de nieuwe tekst in. Laat een lege regel achter om op te slaan.")
                 nieuwe_tekst_regels = []
                 while True:
@@ -35,7 +48,7 @@ def main():
                     print("Fout: Kon de nieuwe tekst niet opslaan.")
                 continue
 
-            elif invoer_lower == 'wijzig':
+            elif invoer_lower == 'wijzig' or invoer_lower == 'w':
                 try:
                     index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt wijzigen: "))
                     if index_nummer not in db.data:
@@ -65,7 +78,7 @@ def main():
                     continue
                 continue
 
-            elif invoer_lower == 'verwijder':
+            elif invoer_lower == 'verwijder' or invoer_lower == 'v':
                 try:
                     index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt verwijderen: "))
                     if index_nummer not in db.data:

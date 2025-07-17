@@ -29,3 +29,12 @@ nog maar een blokje tekst toevoegen
 Deze is ingevoerd op positie 9
 extra regel
 
+###INDEX: 8
+Nog een tekst erbij
+
+###INDEX: 9
+bla die bla
+
+###INDEX: 10
+item 11
+

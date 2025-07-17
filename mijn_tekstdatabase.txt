@@ -23,7 +23,8 @@ Dit is een wijziging voor item 5
 
 
 ###INDEX: 6
-2e regel
+nieuwe wijzig poging regel 1
+regel2
 
 ###INDEX: 7
 Deze is ingevoerd op positie 9

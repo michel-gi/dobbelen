@@ -50,8 +50,6 @@ def main():
                 elif bevestiging.startswith('n'):
                     print("Operatie geannuleerd.")
                     sys.exit(0)
-        bestandsnaam = args.create_filename
-        create_new = True
 
     # Maak één database object aan. Alle operaties gaan via dit object.
     db = TextDatabase(bestandsnaam, create_new=create_new)

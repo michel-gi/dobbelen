@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Zorg ervoor dat dit bestand in dezelfde map staat als tekstlezer.py
 
 # We importeren alleen de TextDatabase class uit de 'database' module.

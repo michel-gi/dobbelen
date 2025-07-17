@@ -40,6 +40,10 @@ bla die bla
 item 11
 
 ###INDEX: 11
-extra regel
-.
+1 regel
+2 regel
+3 regel
+
+###INDEX: 12
+deze tekst is gewijzigd
 

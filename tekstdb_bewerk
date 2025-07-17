@@ -23,37 +23,30 @@ def main():
         # Zorgt voor correcte weergave van newlines in de helptekst
         formatter_class=argparse.RawTextHelpFormatter
     )
-    # Een 'mutually exclusive group' zorgt dat -f en -cf niet tegelijk gebruikt kunnen worden
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-f", "--file",
-        dest="filename",
-        help="Gebruik een bestaand databasebestand."
+    parser.add_argument(
+        "bestandsnaam",
+        nargs="?",  # Maakt het argument optioneel
+        default="mijn_tekstdatabase.txt",
+        help="Het databasebestand om te openen (standaard: mijn_tekstdatabase.txt)."
     )
-    group.add_argument(
-        "-cf", "--create-file",
-        dest="create_filename",
-        help="Creëer een nieuw, leeg databasebestand.\nLET OP: Kan een bestaand bestand met dezelfde naam\noverschrijven na uw bevestiging."
+    parser.add_argument(
+        "-c", "--create",
+        action="store_true",  # Gebruik een flag om aan te geven of een nieuw bestand moet worden aangemaakt
+        help="Creëer een nieuw, leeg databasebestand. Overschrijft een bestaand bestand na bevestiging."
     )
 
     args = parser.parse_args()
 
-    # Standaard gedrag als er geen argumenten worden meegegeven
-    bestandsnaam = "mijn_tekstdatabase.txt"
-    create_new = False
+    bestandsnaam = args.bestandsnaam
+    create_new = args.create
 
-    if args.filename:
-        if not os.path.exists(args.filename):
-            print(f"Fout: Bestand '{args.filename}' niet gevonden.", file=sys.stderr)
-            sys.exit(1)
-        bestandsnaam = args.filename
-    elif args.create_filename:
-        if os.path.exists(args.create_filename):
-            print(f"Waarschuwing: Bestand '{args.create_filename}' bestaat al.")
+    if create_new:
+        if os.path.exists(bestandsnaam):
+            print(f"Waarschuwing: Bestand '{bestandsnaam}' bestaat al.")
             while True:
                 bevestiging = input("Weet u zeker dat u dit wilt overschrijven met een lege database? (j/n): ").lower()
                 if bevestiging.startswith('j'):
-                    break
+                    break  # Ga door met overschrijven
                 elif bevestiging.startswith('n'):
                     print("Operatie geannuleerd.")
                     sys.exit(0)

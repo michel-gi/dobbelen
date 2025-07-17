@@ -11,3 +11,4 @@ pietjepuk
 *.swp
 .ssh
 __pycache__/*
+venv/*

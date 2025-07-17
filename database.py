@@ -7,16 +7,23 @@ class TextDatabase:
     Deze class bundelt de data en de operaties (lezen, schrijven, toevoegen)
     in één object.
     """
-    def __init__(self, bestandsnaam):
+    def __init__(self, bestandsnaam, create_new=False):
         """
         Constructor: wordt aangeroepen als een nieuw TextDatabase object wordt gemaakt.
         
         Args:
             bestandsnaam (str): Het pad naar het databasebestand.
+            create_new (bool): Indien True, start met een lege database, zelfs als
+                               het bestand al bestaat. Het bestand wordt bij de
+                               eerste schrijf-actie overschreven.
         """
         self.bestandsnaam = bestandsnaam
-        self.data = self._lees_bestand()
-        print(f"Database '{self.bestandsnaam}' geladen. {len(self.data)} items gevonden.")
+        if create_new:
+            self.data = {}
+            print(f"Nieuwe, lege database '{self.bestandsnaam}' wordt aangemaakt.")
+        else:
+            self.data = self._lees_bestand()
+            print(f"Database '{self.bestandsnaam}' geladen. {len(self.data)} items gevonden.")
 
     def _lees_bestand(self):
         """

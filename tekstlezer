@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # Importeer de class uit de nieuwe module
+import argparse
+import sys
+import os
 from database import TextDatabase
 
 def toon_menu():
@@ -14,9 +17,51 @@ def toon_menu():
 
 def main():
     """Hoofdfunctie voor de gebruikersinteractie."""
-    # Maak één database object aan. Alle operaties gaan via dit object.
+    parser = argparse.ArgumentParser(
+        prog="tekstdb_bewerk",  # Toon de juiste naam in helpberichten
+        description="Een interactieve command-line tool om tekst-databases te bewerken.",
+        # Zorgt voor correcte weergave van newlines in de helptekst
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    # Een 'mutually exclusive group' zorgt dat -f en -cf niet tegelijk gebruikt kunnen worden
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-f", "--file",
+        dest="filename",
+        help="Gebruik een bestaand databasebestand."
+    )
+    group.add_argument(
+        "-cf", "--create-file",
+        dest="create_filename",
+        help="Creëer een nieuw, leeg databasebestand.\nLET OP: Kan een bestaand bestand met dezelfde naam\noverschrijven na uw bevestiging."
+    )
 
-    db = TextDatabase("mijn_tekstdatabase.txt")
+    args = parser.parse_args()
+
+    # Standaard gedrag als er geen argumenten worden meegegeven
+    bestandsnaam = "mijn_tekstdatabase.txt"
+    create_new = False
+
+    if args.filename:
+        if not os.path.exists(args.filename):
+            print(f"Fout: Bestand '{args.filename}' niet gevonden.", file=sys.stderr)
+            sys.exit(1)
+        bestandsnaam = args.filename
+    elif args.create_filename:
+        if os.path.exists(args.create_filename):
+            print(f"Waarschuwing: Bestand '{args.create_filename}' bestaat al.")
+            while True:
+                bevestiging = input("Weet u zeker dat u dit wilt overschrijven met een lege database? (j/n): ").lower()
+                if bevestiging.startswith('j'):
+                    break
+                elif bevestiging.startswith('n'):
+                    print("Operatie geannuleerd.")
+                    sys.exit(0)
+        bestandsnaam = args.create_filename
+        create_new = True
+
+    # Maak één database object aan. Alle operaties gaan via dit object.
+    db = TextDatabase(bestandsnaam, create_new=create_new)
     toon_menu()  # Toon het menu direct bij de start
     
     while True:

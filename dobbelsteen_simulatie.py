@@ -5,6 +5,7 @@ Een Python-script om de kansverdeling van dobbelsteenworpen te simuleren.
 
 import argparse
 import random
+import numpy as np
 from collections import Counter
 
 # Probeer matplotlib te importeren en geef een duidelijke foutmelding als het niet lukt.
@@ -61,22 +62,21 @@ def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
     """
     Berekent de exacte kansverdeling met behulp van convolutie.
     Geeft het aantal combinaties voor elke mogelijke som terug.
+    Deze versie gebruikt NumPy voor efficiëntie.
     """
-    # Start met de verdeling voor 1 dobbelsteen (1 manier voor elke uitkomst)
-    verdeling = [1] * aantal_zijden
+    # De verdeling van de combinaties voor 1 dobbelsteen.
+    basis_verdeling = [1] * aantal_zijden
+
+    # Startpunt voor de convolutie.
+    huidige_verdeling = basis_verdeling
 
     # Voer de convolutie uit voor elke extra dobbelsteen
-    for i in range(1, aantal_dobbelstenen):
-        nieuwe_verdeling = [0] * (len(verdeling) + aantal_zijden - 1)
-        for i_oud, val_oud in enumerate(verdeling):
-            for i_nieuw, val_nieuw in enumerate([1] * aantal_zijden):
-                nieuwe_verdeling[i_oud + i_nieuw] += val_oud * val_nieuw
-        verdeling = nieuwe_verdeling
+    for _ in range(1, aantal_dobbelstenen):
+        huidige_verdeling = np.convolve(huidige_verdeling, basis_verdeling)
 
-    # Converteer de lijst naar een dictionary {som: combinaties}
-    # De index van de lijst is (som - aantal_dobbelstenen)
+    # Converteer de lijst met combinaties naar een dictionary {som: combinaties}
     min_som = aantal_dobbelstenen
-    return {i + min_som: combinaties for i, combinaties in enumerate(verdeling)}
+    return {i + min_som: combinaties for i, combinaties in enumerate(huidige_verdeling)}
 
 def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling=None):
     """

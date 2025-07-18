@@ -3,6 +3,7 @@
 Een Python-script om de kansverdeling van dobbelsteenworpen te simuleren.
 """
 
+import argparse
 import random
 from collections import Counter
 
@@ -13,12 +14,6 @@ except ImportError:
     print("Fout: De 'matplotlib' bibliotheek is niet gevonden.")
     print("Installeer deze met het commando: python3 -m pip install matplotlib")
     exit()
-
-# --- INSTELLINGEN ---
-AANTAL_DOBBELSTENEN = 3  # Verander dit getal om met meer/minder dobbelstenen te gooien
-AANTAL_WORPEN = 100000   # Een groot aantal worpen voor een duidelijke verdeling
-AANTAL_ZIJDEN = 6        # Standaard 6-zijdige dobbelsteen
-# --------------------
 
 def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
     """
@@ -33,7 +28,7 @@ def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
         collections.Counter: Een object met de som van de worpen als sleutel
                              en de frequentie als waarde.
     """
-    print(f"Simulatie gestart: {aantal_worpen} worpen met {aantal_dobbelstenen} dobbelsteen/dobbelstenen...")
+    print(f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen...".replace(',', '.'))
     resultaten = []
     for _ in range(aantal_worpen):
         worp_totaal = 0
@@ -62,37 +57,103 @@ def toon_verdeling_tekstueel(resultaten, schaal=100):
         balk = '#' * balk_lengte
         print(f"Som {som:2d}: {frequentie:6d} keer | {balk}")
 
-def toon_verdeling_grafisch(resultaten, aantal_dobbelstenen, aantal_worpen):
+def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
+    """
+    Berekent de exacte kansverdeling met behulp van convolutie.
+    Geeft het aantal combinaties voor elke mogelijke som terug.
+    """
+    # Start met de verdeling voor 1 dobbelsteen (1 manier voor elke uitkomst)
+    verdeling = [1] * aantal_zijden
+
+    # Voer de convolutie uit voor elke extra dobbelsteen
+    for i in range(1, aantal_dobbelstenen):
+        nieuwe_verdeling = [0] * (len(verdeling) + aantal_zijden - 1)
+        for i_oud, val_oud in enumerate(verdeling):
+            for i_nieuw, val_nieuw in enumerate([1] * aantal_zijden):
+                nieuwe_verdeling[i_oud + i_nieuw] += val_oud * val_nieuw
+        verdeling = nieuwe_verdeling
+
+    # Converteer de lijst naar een dictionary {som: combinaties}
+    # De index van de lijst is (som - aantal_dobbelstenen)
+    min_som = aantal_dobbelstenen
+    return {i + min_som: combinaties for i, combinaties in enumerate(verdeling)}
+
+def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling=None):
     """
     Toont de verdeling van de resultaten in een staafdiagram met matplotlib.
+    Kan ook de theoretische verdeling als een lijn plotten.
     """
     # Sorteer de data op de som (sleutel) voor een logische grafiek
-    gesorteerde_items = sorted(resultaten.items())
+    gesorteerde_items = sorted(simulatie_resultaten.items())
     sommen = [item[0] for item in gesorteerde_items]
     frequenties = [item[1] for item in gesorteerde_items]
 
     # Maak de plot
-    plt.figure(figsize=(10, 6))  # Maak de grafiek wat breder
-    plt.bar(sommen, frequenties, color='skyblue', edgecolor='black')
+    plt.figure(figsize=(12, 7))  # Maak de grafiek wat breder
+    plt.bar(sommen, frequenties, color='skyblue', edgecolor='black', label='Simulatie')
 
     # Voeg titels en labels toe
-    plt.title(f'Kansverdeling van {aantal_worpen} worpen met {aantal_dobbelstenen} dobbelstenen')
+    plt.title(f'Verdeling van {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen'.replace(',', '.'))
     plt.xlabel('Som van de ogen')
     plt.ylabel('Frequentie')
 
+    # Plot de theoretische verdeling als die is meegegeven
+    if theoretische_verdeling:
+        theoretische_sommen = sorted(theoretische_verdeling.keys())
+        theoretische_combinaties = [theoretische_verdeling[s] for s in theoretische_sommen]
+
+        # Schaal de theoretische data zodat deze vergelijkbaar is met de simulatie
+        totaal_combinaties = sum(theoretische_combinaties)
+        schaal_factor = aantal_worpen / totaal_combinaties
+        geschaalde_frequenties = [c * schaal_factor for c in theoretische_combinaties]
+
+        plt.plot(theoretische_sommen, geschaalde_frequenties, color='red', marker='o', linestyle='-', linewidth=2, label='Theorie')
+
     # Zorg ervoor dat alle integers op de x-as worden getoond
     min_som = aantal_dobbelstenen
-    max_som = aantal_dobbelstenen * AANTAL_ZIJDEN
-    plt.xticks(range(min_som, max_som + 1))
+    max_som = aantal_dobbelstenen * aantal_zijden
+    # Als er veel mogelijke sommen zijn, toon niet elke tick om overlap te voorkomen
+    if max_som - min_som < 35:
+        plt.xticks(range(min_som, max_som + 1))
+    else:
+        # Toon bijvoorbeeld elke 5e of 10e tick
+        stap_grootte = 5 if max_som - min_som < 100 else 10
+        plt.xticks(range(min_som, max_som + 1, stap_grootte))
 
     plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.legend()
     plt.show()
 
 def main():
     """Hoofdfunctie van het script."""
-    resultaten = simuleer_worpen(AANTAL_DOBBELSTENEN, AANTAL_WORPEN, AANTAL_ZIJDEN)
-    toon_verdeling_tekstueel(resultaten)
-    toon_verdeling_grafisch(resultaten, AANTAL_DOBBELSTENEN, AANTAL_WORPEN)
+    parser = argparse.ArgumentParser(
+        description="Simuleert dobbelsteenworpen en toont de kansverdeling.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter # Toont standaardwaarden in help
+    )
+    parser.add_argument(
+        '-s', '--stenen', type=int, default=3,
+        help="Het aantal dobbelstenen dat per worp wordt gegooid."
+    )
+    parser.add_argument(
+        '-z', '--zijden', type=int, default=6,
+        help="Het aantal zijden van elke dobbelsteen."
+    )
+    parser.add_argument(
+        '-w', '--worpen', type=int, default=100000,
+        help="Het totale aantal worpen dat wordt gesimuleerd."
+    )
+    args = parser.parse_args()
+
+    # Gebruik de waarden uit de command-line argumenten
+    aantal_dobbelstenen = args.stenen
+    aantal_zijden = args.zijden
+    aantal_worpen = args.worpen
+
+    simulatie_resultaten = simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden)
+    theoretische_verdeling = bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden)
+
+    toon_verdeling_tekstueel(simulatie_resultaten)
+    toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling)
 
 if __name__ == "__main__":
     main()

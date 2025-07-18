@@ -1,4 +1,4 @@
-name: Build Executable
+name: Build Cross-Platform Executables
 
 on:
   push:
@@ -6,8 +6,13 @@ on:
   workflow_dispatch: # Maakt het mogelijk om de build handmatig te starten
 
 jobs:
-  build-windows:
-    runs-on: windows-latest  # Gebruik de nieuwste Windows-versie die GitHub aanbiedt
+  build:
+    # Gebruik een matrix om de job op meerdere besturingssystemen te draaien
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Check out repository code
@@ -24,11 +29,22 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    # Deze stap stelt de naam van de executable in op basis van het OS
+    - name: Set executable name
+      id: set_name
+      run: |
+        if [[ "${{ runner.os }}" == "Windows" ]]; then
+          echo "exe_name=dobbelsteen_simulatie.exe" >> $GITHUB_ENV
+        else
+          echo "exe_name=dobbelsteen_simulatie" >> $GITHUB_ENV
+        fi
+      shell: bash
+
     - name: Build with PyInstaller
       run: pyinstaller --onefile --windowed --hidden-import PIL._tkinter_finder dobbelsteen_simulatie.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dobbelsteen-simulatie-windows
-        path: dist/dobbelsteen_simulatie.exe
+        name: dobbelsteen-simulatie-${{ runner.os }}
+        path: dist/${{ env.exe_name }}

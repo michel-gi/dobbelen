@@ -41,7 +41,24 @@ jobs:
       shell: bash
 
     - name: Build with PyInstaller
-      run: pyinstaller --onefile --windowed --hidden-import PIL._tkinter_finder dobbelsteen_simulatie.py
+      run: |
+        # Bepaal het icoon-argument op basis van het besturingssysteem
+        ICON_ARG=""
+        if [[ "${{ runner.os }}" == "Windows" ]]; then
+          # Controleer of het icoonbestand bestaat
+          if [ -f "assets/dice.ico" ]; then
+            ICON_ARG="--icon=assets/dice.ico"
+          fi
+        elif [[ "${{ runner.os }}" == "macOS" ]]; then
+          # Controleer of het icoonbestand bestaat
+          if [ -f "assets/dice.icns" ]; then
+            ICON_ARG="--icon=assets/dice.icns"
+          fi
+        fi
+
+        # Voer PyInstaller uit met de juiste argumenten
+        pyinstaller --onefile --windowed --hidden-import PIL._tkinter_finder $ICON_ARG dobbelsteen_simulatie.py
+      shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

@@ -30,16 +30,13 @@ def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
                              en de frequentie als waarde.
     """
     print(f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen...".replace(',', '.'))
-    resultaten = []
-    for _ in range(aantal_worpen):
-        worp_totaal = 0
-        for _ in range(aantal_dobbelstenen):
-            # Gooi een enkele dobbelsteen en tel op bij het totaal
-            worp_totaal += random.randint(1, aantal_zijden)
-        resultaten.append(worp_totaal)
 
+    # Genereer alle worpen in één keer met NumPy voor hoge prestaties
+    worpen = np.random.randint(1, aantal_zijden + 1, size=(aantal_worpen, aantal_dobbelstenen))
+    # Tel de som per worp (langs de tweede as)
+    sommen = np.sum(worpen, axis=1)
     # Counter telt automatisch hoe vaak elke unieke som voorkomt
-    return Counter(resultaten)
+    return Counter(sommen)
 
 def toon_verdeling_tekstueel(resultaten, schaal=100):
     """Toont de verdeling als een eenvoudige tekstuele histogram."""

@@ -6,6 +6,8 @@ Een Python-script om de kansverdeling van dobbelsteenworpen te simuleren.
 import argparse
 import sys
 import random
+import tkinter as tk
+from tkinter import ttk, messagebox
 import numpy as np
 from collections import Counter
 
@@ -43,18 +45,22 @@ def toon_verdeling_tekstueel(resultaten, schaal=100):
     """Toont de verdeling als een eenvoudige tekstuele histogram."""
     print("\n--- Tekstuele Verdeling van de Resultaten ---")
     # Sorteer de resultaten op basis van de som (de sleutel)
+    if not resultaten:
+        print("Geen resultaten om te tonen.")
+        return
+
     gesorteerde_resultaten = sorted(resultaten.items())
+    totaal_worpen = sum(resultaten.values())
 
     # Vind de hoogste frequentie voor het schalen van de balken
-    max_frequentie = 0
-    if gesorteerde_resultaten:
-        max_frequentie = max(item[1] for item in gesorteerde_resultaten)
+    max_frequentie = max(item[1] for item in gesorteerde_resultaten) if gesorteerde_resultaten else 1
 
     for som, frequentie in gesorteerde_resultaten:
         # Bereken de lengte van de visuele balk
         balk_lengte = int((frequentie / max_frequentie) * schaal) if max_frequentie > 0 else 0
         balk = '#' * balk_lengte
-        print(f"Som {som:2d}: {frequentie:6d} keer | {balk}")
+        percentage = (frequentie / totaal_worpen) * 100
+        print(f"Som {som:2d}: {frequentie:7,d} keer ({percentage:5.2f}%) | {balk}".replace(',', '.'))
 
 def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
     """
@@ -122,51 +128,103 @@ def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_wo
     plt.legend()
     plt.show()
 
-def vraag_getal(prompt, standaard):
-    """Vraagt de gebruiker om een getal en valideert de invoer."""
-    while True:
-        invoer = input(f"{prompt} (standaard: {standaard}): ")
-        if not invoer:
-            return standaard
-        try:
-            getal = int(invoer)
-            if getal > 0:
-                return getal
-            else:
-                print("Fout: Voer a.u.b. een positief getal in.", file=sys.stderr)
-        except ValueError:
-            print("Fout: Ongeldige invoer. Voer a.u.b. een geheel getal in.", file=sys.stderr)
-
 def run_simulatie(aantal_dobbelstenen, aantal_zijden, aantal_worpen):
     """Voert de daadwerkelijke simulatie en plotting uit."""
+    # De print-statements hieronder zijn vooral nuttig voor de CLI-modus.
+    # In de GUI-modus (met --windowed) zijn ze niet zichtbaar.
     simulatie_resultaten = simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden)
     theoretische_verdeling = bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden)
 
     toon_verdeling_tekstueel(simulatie_resultaten)
     toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling)
 
+class DobbelsteenApp:
+    """De Tkinter GUI voor de dobbelsteen simulatie."""
+    def __init__(self, master):
+        self.master = master
+        master.title("Dobbelsteen Simulatie")
+        master.resizable(False, False) # Maak het venster niet-schaalbaar
+
+        # Maak de menubalk
+        self.create_menu()
+
+        # Gebruik ttk voor modernere widgets
+        self.frame = ttk.Frame(master, padding="10")
+        self.frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+        # Invoervelden en labels
+        ttk.Label(self.frame, text="Aantal dobbelstenen:").grid(column=0, row=0, sticky=tk.W, pady=2)
+        self.stenen_var = tk.StringVar(value="3")
+        ttk.Entry(self.frame, width=10, textvariable=self.stenen_var).grid(column=1, row=0, sticky=tk.E, pady=2)
+
+        ttk.Label(self.frame, text="Aantal zijden per steen:").grid(column=0, row=1, sticky=tk.W, pady=2)
+        self.zijden_var = tk.StringVar(value="6")
+        ttk.Entry(self.frame, width=10, textvariable=self.zijden_var).grid(column=1, row=1, sticky=tk.E, pady=2)
+
+        ttk.Label(self.frame, text="Aantal worpen:").grid(column=0, row=2, sticky=tk.W, pady=2)
+        self.worpen_var = tk.StringVar(value="100000")
+        ttk.Entry(self.frame, width=10, textvariable=self.worpen_var).grid(column=1, row=2, sticky=tk.E, pady=2)
+
+        # Knop om de simulatie te starten
+        ttk.Button(self.frame, text="Start Simulatie", command=self.start_simulatie_gui).grid(column=0, row=3, columnspan=2, pady=10)
+
+    def create_menu(self):
+        """Maakt de menubalk voor de applicatie."""
+        menubar = tk.Menu(self.master)
+        self.master.config(menu=menubar)
+
+        # Voeg een "Help" menu toe
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Over...", command=self.show_about)
+
+    def show_about(self):
+        """Toont het 'Over' dialoogvenster."""
+        about_message = ("Dobbelsteen Simulatie v1.0\n\n"
+                         "Een programma om dobbelsteenworpen te simuleren en de kansverdeling te visualiseren.\n\n"
+                         "Gemaakt met Python, Tkinter en Matplotlib.")
+        messagebox.showinfo("Over Dobbelsteen Simulatie", about_message)
+
+    def start_simulatie_gui(self):
+        """Haalt waarden uit de GUI, valideert ze en start de simulatie."""
+        try:
+            stenen = int(self.stenen_var.get())
+            zijden = int(self.zijden_var.get())
+            worpen = int(self.worpen_var.get())
+
+            if not all(x > 0 for x in [stenen, zijden, worpen]):
+                messagebox.showerror("Fout", "Alle waarden moeten positieve getallen zijn.")
+                return
+
+            # Roep de bestaande logica aan
+            run_simulatie(stenen, zijden, worpen)
+
+        except ValueError:
+            messagebox.showerror("Fout", "Ongeldige invoer. Zorg ervoor dat alle velden gehele getallen zijn.")
+
 def main():
     """Hoofdfunctie van het script."""
-    # sys.argv[0] is de naam van het script zelf. Als er meer argumenten zijn,
-    # draaien we in non-interactieve (command-line) modus.
+    # Als er command-line argumenten zijn (naast de scriptnaam zelf),
+    # draaien we in de command-line modus voor backward compatibility.
     if len(sys.argv) > 1:
-        parser = argparse.ArgumentParser(
-            description="Simuleert dobbelsteenworpen en toont de kansverdeling.",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
-        )
-        parser.add_argument('-s', '--stenen', type=int, default=3, help="Het aantal dobbelstenen per worp.")
-        parser.add_argument('-z', '--zijden', type=int, default=6, help="Het aantal zijden van elke dobbelsteen.")
-        parser.add_argument('-w', '--worpen', type=int, default=100000, help="Het totale aantal worpen.")
-        args = parser.parse_args()
-        run_simulatie(args.stenen, args.zijden, args.worpen)
+        main_cli()
     else:
-        # Geen argumenten: start interactieve modus
-        print("--- Interactieve Dobbelsteen Simulatie ---")
-        print("Geef de parameters op of druk op Enter om de standaardwaarde te gebruiken.\n")
-        aantal_dobbelstenen = vraag_getal("Aantal dobbelstenen", 3)
-        aantal_zijden = vraag_getal("Aantal zijden per dobbelsteen", 6)
-        aantal_worpen = vraag_getal("Aantal worpen om te simuleren", 100000)
-        run_simulatie(aantal_dobbelstenen, aantal_zijden, aantal_worpen)
+        # Geen argumenten: start de GUI-modus
+        root = tk.Tk()
+        app = DobbelsteenApp(root)
+        root.mainloop()
+
+def main_cli():
+    """De originele command-line interface logica."""
+    parser = argparse.ArgumentParser(
+        description="Simuleert dobbelsteenworpen en toont de kansverdeling.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument('-s', '--stenen', type=int, default=3, help="Het aantal dobbelstenen per worp.")
+    parser.add_argument('-z', '--zijden', type=int, default=6, help="Het aantal zijden van elke dobbelsteen.")
+    parser.add_argument('-w', '--worpen', type=int, default=100000, help="Het totale aantal worpen.")
+    args = parser.parse_args()
+    run_simulatie(args.stenen, args.zijden, args.worpen)
 
 if __name__ == "__main__":
     main()

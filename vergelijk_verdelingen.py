@@ -7,28 +7,7 @@ aantallen dobbelstenen te berekenen en te vergelijken in één grafiek.
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-
-def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
-    """
-    Berekent de exacte kansverdeling met behulp van convolutie.
-    Deze versie gebruikt NumPy voor efficiëntie.
-
-    Returns:
-        dict: Een dictionary met {som: aantal_combinaties}.
-    """
-    # De verdeling van de combinaties voor 1 dobbelsteen.
-    basis_verdeling = [1] * aantal_zijden
-
-    # Startpunt voor de convolutie.
-    huidige_verdeling = basis_verdeling
-
-    # Voer de convolutie uit voor elke extra dobbelsteen.
-    for _ in range(1, aantal_dobbelstenen):
-        huidige_verdeling = np.convolve(huidige_verdeling, basis_verdeling)
-
-    # Converteer de lijst met combinaties naar een dictionary {som: combinaties}
-    min_som = aantal_dobbelstenen
-    return {i + min_som: combinaties for i, combinaties in enumerate(huidige_verdeling)}
+from dobbel_utils import bereken_theoretische_verdeling
 
 def main():
     """Hoofdfunctie van het script."""

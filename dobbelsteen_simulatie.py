@@ -107,8 +107,10 @@ def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_wo
         theoretische_combinaties = [theoretische_verdeling[s] for s in theoretische_sommen]
 
         # Schaal de theoretische data zodat deze vergelijkbaar is met de simulatie
-        totaal_combinaties = sum(theoretische_combinaties)
-        schaal_factor = aantal_worpen / totaal_combinaties
+        # Het totale aantal combinaties is simpelweg zijden^stenen.
+        # Dit is veel sneller en robuuster dan de hele lijst optellen.
+        totaal_combinaties = float(aantal_zijden ** aantal_dobbelstenen)
+        schaal_factor = aantal_worpen / totaal_combinaties if totaal_combinaties > 0 else 0
         geschaalde_frequenties = [c * schaal_factor for c in theoretische_combinaties]
 
         plt.plot(theoretische_sommen, geschaalde_frequenties, color='red', marker='o', linestyle='-', linewidth=2, label='Theorie')
@@ -195,6 +197,13 @@ class DobbelsteenApp:
             if not all(x > 0 for x in [stenen, zijden, worpen]):
                 messagebox.showerror("Fout", "Alle waarden moeten positieve getallen zijn.")
                 return
+
+            # Voeg een extra controle toe voor zeer grote waarden om lange wachttijden te voorkomen
+            if stenen > 50:
+                if not messagebox.askokcancel("Waarschuwing", f"Een simulatie met {stenen} dobbelstenen kan erg lang duren. Wilt u doorgaan?"):
+                    return
+            if zijden > 1000:
+                messagebox.showwarning("Waarschuwing", f"Een dobbelsteen met {zijden} zijden kan de berekening vertragen.")
 
             # Roep de bestaande logica aan
             run_simulatie(stenen, zijden, worpen)

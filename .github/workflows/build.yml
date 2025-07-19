@@ -61,7 +61,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: dobbelsteen-simulatie-${{ runner.os }}
-        path: dist/${{ env.exe_name }}
+        path: dist/${{ steps.set_name.outputs.exe_name }}
 
   release:
     # De 'release' job draait alleen als de 'build' job succesvol is voor alle OS'en
@@ -76,19 +76,23 @@ jobs:
       with:
         path: artifacts/
 
+    - name: Generate release tag
+      id: tag
+      # Gebruik de 'pushed_at' tijd van de repository voor een deterministische tag.
+      # De '@' voor de timestamp geeft aan dat het een Unix epoch tijd is.
+      run: echo "release_tag=release-$(date -u -d @${{ github.event.repository.pushed_at }} +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
     - name: Create Release and Upload Artifacts
       uses: softprops/action-gh-release@v2
       with:
         # Maak een tag aan op basis van de datum en tijd, bv. 'release-20240815123000'
-        tag_name: release-${{ env.TIMESTAMP }}
+        tag_name: ${{ steps.tag.outputs.release_tag }}
         # Gebruik de laatste commit message als de body van de release notes
         body: |
           Automatische release van de laatste wijzigingen.
           Commit: ${{ github.sha }}
+        make_latest: true # Markeer deze release als de 'latest'
         files: |
           artifacts/dobbelsteen-simulatie-windows-latest/dobbelsteen_simulatie.exe
           artifacts/dobbelsteen-simulatie-macos-latest/dobbelsteen_simulatie
           artifacts/dobbelsteen-simulatie-ubuntu-latest/dobbelsteen_simulatie
-      env:
-        # Maak een timestamp variabele beschikbaar voor de tag_name
-        TIMESTAMP: ${{ env.TIMESTAMP || format('{0:yyyyMMddHHmmss}', github.event.repository.pushed_at || '0') }}

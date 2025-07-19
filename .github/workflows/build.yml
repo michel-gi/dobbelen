@@ -34,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12' # Gebruik dezelfde Python-versie als lokaal
+        python-version: '3.12' # Gebruik dezelfde Python-versie als lokaal.
 
     - name: Install dependencies
       run: |
@@ -118,5 +118,6 @@ jobs:
           Automatische release van de laatste wijzigingen.
           Commit: ${{ github.sha }}
         make_latest: true # Markeer deze release als de 'latest'
+        fail_on_unmatched_files: true # Laat de job falen als er geen bestanden zijn om te uploaden
         files: |
           artifacts/*/*

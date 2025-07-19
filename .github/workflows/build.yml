@@ -102,6 +102,36 @@ jobs:
       with:
         path: artifacts/
 
+    - name: Prepare files for release
+      run: |
+        mkdir release-assets
+        cd artifacts
+        for dir in *; do
+          if [[ ! -d "$dir" ]]; then continue; fi
+
+          # Pak het ene bestand uit de artifact-map
+          file_path=$(find "$dir" -type f -print -quit)
+          if [[ -z "$file_path" ]]; then continue; fi
+
+          # Construeer de nieuwe, unieke bestandsnaam op basis van de mapnaam
+          # bv. "dobbelsteen_simulatie-windows-latest" -> "dobbelsteen_simulatie-windows.exe"
+          if [[ "$dir" == *-windows-latest ]]; then
+            os="windows"
+            script_name=${dir%-windows-latest}
+            ext=".exe"
+          elif [[ "$dir" == *-ubuntu-latest ]]; then
+            os="linux"
+            script_name=${dir%-ubuntu-latest}
+            ext=""
+          elif [[ "$dir" == *-macos-latest ]]; then
+            os="macos"
+            script_name=${dir%-macos-latest}
+            ext=""
+          fi
+          mv "$file_path" "../release-assets/${script_name}-${os}${ext}"
+        done
+      shell: bash
+
     - name: Generate release tag
       id: tag
       # Gebruik de 'pushed_at' tijd van de repository voor een deterministische tag.
@@ -120,4 +150,4 @@ jobs:
         make_latest: true # Markeer deze release als de 'latest'
         fail_on_unmatched_files: true # Laat de job falen als er geen bestanden zijn om te uploaden
         files: |
-          artifacts/*/*
+          release-assets/*

@@ -29,7 +29,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyinstaller
 
     # Deze stap stelt de naam van de executable in op basis van het OS
     - name: Set executable name
@@ -48,8 +47,8 @@ jobs:
         PYINSTALLER_ARGS="--onefile --windowed --hidden-import PIL._tkinter_finder"
 
         # Voeg het icoon-argument conditioneel toe
-        if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" ]]; then
-          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico"
+        if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" && -f "version.py" ]]; then
+          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico --version-file version.py"
         elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
           PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
         fi

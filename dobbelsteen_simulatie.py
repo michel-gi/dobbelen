@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import numpy as np
 from collections import Counter
+from dobbel_utils import bereken_theoretische_verdeling
 
 # Probeer matplotlib te importeren en geef een duidelijke foutmelding als het niet lukt.
 try:
@@ -61,26 +62,6 @@ def toon_verdeling_tekstueel(resultaten, schaal=100):
         balk = '#' * balk_lengte
         percentage = (frequentie / totaal_worpen) * 100
         print(f"Som {som:2d}: {frequentie:7,d} keer ({percentage:5.2f}%) | {balk}".replace(',', '.'))
-
-def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
-    """
-    Berekent de exacte kansverdeling met behulp van convolutie.
-    Geeft het aantal combinaties voor elke mogelijke som terug.
-    Deze versie gebruikt NumPy voor efficiëntie.
-    """
-    # De verdeling van de combinaties voor 1 dobbelsteen.
-    basis_verdeling = [1] * aantal_zijden
-
-    # Startpunt voor de convolutie.
-    huidige_verdeling = basis_verdeling
-
-    # Voer de convolutie uit voor elke extra dobbelsteen
-    for _ in range(1, aantal_dobbelstenen):
-        huidige_verdeling = np.convolve(huidige_verdeling, basis_verdeling)
-
-    # Converteer de lijst met combinaties naar een dictionary {som: combinaties}
-    min_som = aantal_dobbelstenen
-    return {i + min_som: combinaties for i, combinaties in enumerate(huidige_verdeling)}
 
 def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling=None):
     """

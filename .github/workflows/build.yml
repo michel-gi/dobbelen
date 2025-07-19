@@ -32,7 +32,6 @@ jobs:
 
     # Deze stap stelt de naam van de executable in op basis van het OS
     - name: Set executable name
-      id: set_name
       run: |
         if [[ "${{ runner.os }}" == "Windows" ]]; then
           echo "exe_name=dobbelsteen_simulatie.exe" >> $GITHUB_ENV
@@ -61,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: dobbelsteen-simulatie-${{ runner.os }}
-        path: dist/${{ steps.set_name.outputs.exe_name }}
+        path: dist/${{ env.exe_name }}
 
   release:
     # De 'release' job draait alleen als de 'build' job succesvol is voor alle OS'en
@@ -69,6 +68,10 @@ jobs:
     runs-on: ubuntu-latest
     # Draai deze job alleen bij een push naar de main branch, niet bij pull requests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      # 'contents: write' is vereist om releases te kunnen aanmaken en assets te uploaden.
+      contents: write
 
     steps:
     - name: Download all artifacts

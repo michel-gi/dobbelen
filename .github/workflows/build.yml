@@ -13,6 +13,17 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
+        script:
+          - name: dobbelsteen_simulatie
+            type: gui
+          - name: vergelijk_verdelingen
+            type: gui
+          - name: plot_eindpunt_kansen
+            type: gui
+          - name: tekstdb_bewerk
+            type: console
+          - name: tekstdb_tester
+            type: console
 
     runs-on: ${{ matrix.os }}
 
@@ -34,32 +45,44 @@ jobs:
     - name: Set executable name
       run: |
         if [[ "${{ runner.os }}" == "Windows" ]]; then
-          echo "exe_name=dobbelsteen_simulatie.exe" >> $GITHUB_ENV
+          echo "exe_name=${{ matrix.script.name }}.exe" >> $GITHUB_ENV
         else
-          echo "exe_name=dobbelsteen_simulatie" >> $GITHUB_ENV
+          echo "exe_name=${{ matrix.script.name }}" >> $GITHUB_ENV
         fi
       shell: bash
 
     - name: Build with PyInstaller
       run: |
         # Start met de basis-argumenten
-        PYINSTALLER_ARGS="--onefile --windowed --hidden-import PIL._tkinter_finder"
+        PYINSTALLER_ARGS="--onefile"
 
-        # Voeg het icoon-argument conditioneel toe
-        if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" && -f "version.py" ]]; then
-          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico --version-file version.py"
-        elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
-          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
+        # Bepaal of het een console of windowed app is en voeg specifieke opties toe
+        if [[ "${{ matrix.script.type }}" == "gui" ]]; then
+          # Voor GUI-apps (Tkinter, Matplotlib): verberg het consolevenster op Windows
+          # en help PyInstaller met het vinden van de Tkinter-backend voor Matplotlib.
+          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --windowed --hidden-import PIL._tkinter_finder"
+        else
+          # Voor console-apps: zorg dat er een consolevenster is.
+          PYINSTALLER_ARGS="$PYINSTALLER_ARGS --console"
+        fi
+
+        # Voeg het icoon en versie-info alleen toe aan de hoofd-applicatie
+        if [[ "${{ matrix.script.name }}" == "dobbelsteen_simulatie" ]]; then
+          if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" && -f "version.py" ]]; then
+            PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico --version-file version.py"
+          elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
+            PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
+          fi
         fi
 
         # Voer PyInstaller uit met de samengestelde argumenten
-        pyinstaller $PYINSTALLER_ARGS dobbelsteen_simulatie.py
+        pyinstaller $PYINSTALLER_ARGS ${{ matrix.script.name }}.py
       shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dobbelsteen-simulatie-${{ runner.os }}
+        name: ${{ matrix.script.name }}-${{ runner.os }}
         path: dist/${{ env.exe_name }}
 
   release:
@@ -96,6 +119,4 @@ jobs:
           Commit: ${{ github.sha }}
         make_latest: true # Markeer deze release als de 'latest'
         files: |
-          artifacts/dobbelsteen-simulatie-windows-latest/dobbelsteen_simulatie.exe
-          artifacts/dobbelsteen-simulatie-macos-latest/dobbelsteen_simulatie
-          artifacts/dobbelsteen-simulatie-ubuntu-latest/dobbelsteen_simulatie
+          artifacts/*/*

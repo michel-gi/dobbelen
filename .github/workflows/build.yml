@@ -62,3 +62,33 @@ jobs:
       with:
         name: dobbelsteen-simulatie-${{ runner.os }}
         path: dist/${{ env.exe_name }}
+
+  release:
+    # De 'release' job draait alleen als de 'build' job succesvol is voor alle OS'en
+    needs: build
+    runs-on: ubuntu-latest
+    # Draai deze job alleen bij een push naar de main branch, niet bij pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Create Release and Upload Artifacts
+      uses: softprops/action-gh-release@v2
+      with:
+        # Maak een tag aan op basis van de datum en tijd, bv. 'release-20240815123000'
+        tag_name: release-${{ env.TIMESTAMP }}
+        # Gebruik de laatste commit message als de body van de release notes
+        body: |
+          Automatische release van de laatste wijzigingen.
+          Commit: ${{ github.sha }}
+        files: |
+          artifacts/dobbelsteen-simulatie-windows-latest/dobbelsteen_simulatie.exe
+          artifacts/dobbelsteen-simulatie-macos-latest/dobbelsteen_simulatie
+          artifacts/dobbelsteen-simulatie-ubuntu-latest/dobbelsteen_simulatie
+      env:
+        # Maak een timestamp variabele beschikbaar voor de tag_name
+        TIMESTAMP: ${{ env.TIMESTAMP || format('{0:yyyyMMddHHmmss}', github.event.repository.pushed_at || '0') }}

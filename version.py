@@ -1,24 +1,8 @@
 # -*- coding: utf-8 -*-
 # Dit bestand bevat de metadata voor de Windows executable.
 # PyInstaller gebruikt dit om de 'Details' tab in de bestandseigenschappen te vullen.
- 
-# Definieer dummy classes om linters (zoals in VS Code) tevreden te stellen.
-# PyInstaller zelf leest dit bestand als tekst en heeft deze classes niet nodig;
-# het herkent de `VSVersionInfo` structuur op basis van de naam.
-class VSVersionInfo:
-    def __init__(self, ffi, kids): pass
-class FixedFileInfo:
-    def __init__(self, **kwargs): pass
-class StringFileInfo:
-    def __init__(self, kids): pass
-class StringTable:
-    def __init__(self, name, kids): pass
-class StringStruct:
-    def __init__(self, name, value): pass
-class VarFileInfo:
-    def __init__(self, kids): pass
-class VarStruct:
-    def __init__(self, name, kids): pass
+# Een linter kan klagen over ongedefinieerde namen, maar dit is verwacht gedrag.
+# PyInstaller voorziet deze namen tijdens het build-proces.
 
 VSVersionInfo(
   ffi=FixedFileInfo(

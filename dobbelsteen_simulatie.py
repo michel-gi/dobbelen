@@ -87,7 +87,7 @@ def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_wo
         theoretische_sommen = sorted(theoretische_verdeling.keys())
         theoretische_combinaties = [theoretische_verdeling[s] for s in theoretische_sommen]
 
-        # Schaal de theoretische data zodat deze vergelijkbaar is met de simulatie
+        # Schaal de theoretische data zodat deze vergelijkbaar is met de simulatie.
         # Het totale aantal combinaties is simpelweg zijden^stenen.
         # Dit is veel sneller en robuuster dan de hele lijst optellen.
         totaal_combinaties = float(aantal_zijden ** aantal_dobbelstenen)

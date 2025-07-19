@@ -10,7 +10,7 @@ contourpy==1.2.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-fonttools==4.59.0
+fonttools==4.53.0
     # via matplotlib
 kiwisolver==1.4.5
     # via matplotlib
@@ -24,17 +24,17 @@ packaging==24.1
     # via matplotlib
 pefile==2023.2.7
     # via pyinstaller
-pillow==10.3.0
+pillow==10.4.0
     # via matplotlib
-pyinstaller==6.7.0
+pyinstaller==6.8.0
     # via -r requirements.in
-pyinstaller-hooks-contrib==2024.5
+pyinstaller-hooks-contrib==2024.6
     # via pyinstaller
 pyparsing==3.1.2
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via matplotlib
-setuptools==69.5.1
+setuptools==70.1.0
     # via pyinstaller
 six==1.16.0
     # via python-dateutil

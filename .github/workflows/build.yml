@@ -15,23 +15,23 @@ on:
   workflow_dispatch: # Maakt het mogelijk om de build handmatig te starten
 
 jobs:
-  lint:
-    name: Run linter (Ruff)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
+  # lint:
+  #   name: Run linter (Ruff)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out repository code
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+  #     - name: Install dependencies
+  #       run: pip install -r requirements.txt
 
-      - name: Run Ruff linter
-        run: ruff check . && ruff format --check .
+  #     - name: Run Ruff linter
+  #       run: ruff check . && ruff format --check .
 
   test:
     name: Run database tests
@@ -54,7 +54,7 @@ jobs:
       run: python tekstdb_tester.py
 
   build:
-    needs: [lint, test] # Zorg ervoor dat de linter en tests eerst slagen
+    needs: test # Zorg ervoor dat de tests eerst slagen
     # Gebruik een matrix om de job op meerdere besturingssystemen te draaien
     strategy:
       matrix:

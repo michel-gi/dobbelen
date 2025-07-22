@@ -19,7 +19,7 @@ jobs:
     # Gebruik een matrix om de job op meerdere besturingssystemen te draaien
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest] #, macos-latest]
         script:
           - name: dobbelsteen_simulatie
             type: gui
@@ -77,9 +77,9 @@ jobs:
         if [[ "${{ matrix.script.name }}" == "dobbelsteen_simulatie" ]]; then
           if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" && -f "version.py" ]]; then
             PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico --version-file version.py"
-          elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
-            PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
-          fi
+          # elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
+          #   PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
+          fi # macOS build is disabled for now
         fi
 
         # Voer PyInstaller uit met de samengestelde argumenten
@@ -130,11 +130,11 @@ jobs:
             os="linux"
             script_name=${dir%-ubuntu-latest}
             ext=""
-          elif [[ "$dir" == *-macos-latest ]]; then
-            os="macos"
-            script_name=${dir%-macos-latest}
-            ext=""
-          fi
+          # elif [[ "$dir" == *-macos-latest ]]; then
+          #   os="macos"
+          #   script_name=${dir%-macos-latest}
+          #   ext=""
+          fi # macOS build is disabled for now
           mv "$file_path" "../release-assets/${script_name}-${os}${ext}"
         done
       shell: bash

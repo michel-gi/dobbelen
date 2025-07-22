@@ -16,8 +16,7 @@ def main():
     """Hoofdfunctie van het script."""
     parser = argparse.ArgumentParser(
         description=(
-            "Plot de kans op de uiterste worp (allemaal 1'en of allemaal max) "
-            "als functie van het aantal dobbelstenen."
+            "Plot de kans op de uiterste worp (allemaal 1'en of allemaal max) als functie van het aantal dobbelstenen."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )

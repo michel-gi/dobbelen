@@ -39,8 +39,7 @@ def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
     # This print is for direct user feedback in CLI mode, which is a primary function.
     # We can leave it, or use logging if we configure a handler for stdout.
     simulatie_bericht = (
-        f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} "
-        f"d{aantal_zijden}-dobbelstenen..."
+        f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen..."
     )
     print(simulatie_bericht.replace(",", "."))
 
@@ -217,10 +216,7 @@ class DobbelsteenApp:
 
             # Voeg een extra controle toe voor zeer grote waarden om lange wachttijden te voorkomen
             if stenen > 50:
-                waarschuwing_bericht = (
-                    f"Een simulatie met {stenen} dobbelstenen kan erg lang duren. "
-                    "Wilt u doorgaan?"
-                )
+                waarschuwing_bericht = f"Een simulatie met {stenen} dobbelstenen kan erg lang duren. Wilt u doorgaan?"
                 if not messagebox.askokcancel("Waarschuwing", waarschuwing_bericht):
                     return
             if zijden > 1000:

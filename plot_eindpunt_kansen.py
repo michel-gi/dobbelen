@@ -7,6 +7,7 @@ als functie van het aantal dobbelstenen, om de exponentiële afname te tonen.
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from dobbel_utils import bereken_kans_uiterste_worp
 
 def main():
     """Hoofdfunctie van het script."""
@@ -25,10 +26,7 @@ def main():
     args = parser.parse_args()
 
     aantallen_stenen = np.arange(1, args.max_stenen + 1)
-    
-    # De kans op de minimale som (allemaal 1'en) is (1/zijden) ^ aantal_stenen
-    # Dit is gelijk aan 1 / (zijden ^ aantal_stenen)
-    kansen = 1 / (args.zijden ** aantallen_stenen)
+    kansen = [bereken_kans_uiterste_worp(n, args.zijden) for n in aantallen_stenen]
 
     # Maak de plot met twee subplots: een met een lineaire y-as en een met een logaritmische y-as.
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))

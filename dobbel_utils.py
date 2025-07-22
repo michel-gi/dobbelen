@@ -17,3 +17,9 @@ def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
 
     min_som = aantal_dobbelstenen
     return {i + min_som: combinaties for i, combinaties in enumerate(huidige_verdeling)}
+
+def bereken_kans_uiterste_worp(aantal_stenen, aantal_zijden):
+    """
+    Berekent de kans op de uiterste worp (allemaal 1'en of allemaal max).
+    """
+    return 1 / (aantal_zijden ** aantal_stenen)

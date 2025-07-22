@@ -17,6 +17,27 @@ This project consists of several standalone applications:
 * **`tekstdb_bewerk`**: A command-line tool for managing the text-based database (`database.py`) used by the applications.
 * **`tekstdb_tester`**: A utility to test the integrity and functionality of the text database.
 
+## Core Components
+
+### `database.py` - The Text Database
+
+At the heart of several applications in this project is a simple, custom-built text database managed by the `TextDatabase` class in `database.py`.
+
+* **Purpose**: To provide a lightweight, human-readable way to store and manage indexed blocks of text in a single file.
+* **Format**: It uses a simple format where each entry is preceded by a unique `###INDEX: <number>` marker.
+* **Functionality**: The class handles all the necessary operations:
+  * Reading and parsing the database file.
+  * Adding, modifying, and deleting entries.
+  * Automatically re-indexing entries when one is removed to maintain a compact index.
+* **Usage**: This component is used by the `tekstdb_bewerk` and `tekstdb_tester` console applications to manage and verify the data.
+
+### `dobbel_utils.py` - Calculation Utilities
+
+This module contains shared mathematical functions used by multiple applications in the project to avoid code duplication.
+
+* **`bereken_theoretische_verdeling`**: Calculates the exact probability distribution for a given number of dice using convolution. This is used by `dobbelsteen_simulatie.py` and `vergelijk_verdelingen.py` to compare simulated results against theoretical probabilities.
+* **`bereken_kans_uiterste_worp`**: A simple function to calculate the probability of an extreme outcome (e.g., all ones or all sixes). This is used by `plot_eindpunt_kansen.py` to demonstrate the exponential decrease in probability as more dice are added.
+
 ## Getting Started
 
 The easiest way to use these tools is to download the pre-built executables for your operating system from the project's GitHub Releases page.

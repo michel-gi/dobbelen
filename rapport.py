@@ -4,6 +4,7 @@
 # We importeren alleen de TextDatabase class uit de 'database' module.
 from database import TextDatabase
 
+
 def maak_rapport():
     """
     Een voorbeeldprogramma dat de TextDatabase class gebruikt om een rapport te maken.

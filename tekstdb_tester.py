@@ -7,9 +7,11 @@ van de TextDatabase class te verifiëren. Het kan direct worden uitgevoerd
 vanuit de command-line en is bedoeld voor integratie in een CI/CD-workflow.
 """
 
-import unittest
 import os
+import unittest
+
 from database import TextDatabase
+
 
 class TestTextDatabase(unittest.TestCase):
     """
@@ -18,6 +20,7 @@ class TestTextDatabase(unittest.TestCase):
     Deze tests zorgen ervoor dat alle database-operaties (aanmaken, lezen,
     wijzigen, verwijderen) correct functioneren.
     """
+
     test_db_file = "_test_database.txt"
 
     def setUp(self):
@@ -85,6 +88,7 @@ class TestTextDatabase(unittest.TestCase):
         self.assertIsNone(db.get_tekst(3), "Oude index 3 moet leeg zijn")
         self.assertEqual(list(db.data.keys()), [1, 2])
         self.assertFalse(db.verwijder_tekst(99), "Moet falen voor niet-bestaande index")
+
 
 if __name__ == "__main__":
     # Dit maakt het script uitvoerbaar en start de test runner.

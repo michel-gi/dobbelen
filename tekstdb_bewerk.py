@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # Importeer de class uit de nieuwe module
 import argparse
-import sys
 import os
+import sys
+
 from database import TextDatabase
+
 
 def toon_menu():
     """Toont het hoofdmenu met beschikbare opties."""
@@ -15,24 +17,26 @@ def toon_menu():
     print("[s]top   - beëindig dit programma")
     print("[m]enu   - dit menu opnieuw weergeven")
 
+
 def main():
     """Hoofdfunctie voor de gebruikersinteractie."""
     parser = argparse.ArgumentParser(
         prog="tekstdb_bewerk",  # Toon de juiste naam in helpberichten
         description="Een interactieve command-line tool om tekst-databases te bewerken.",
         # Zorgt voor correcte weergave van newlines in de helptekst
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "bestandsnaam",
         nargs="?",  # Maakt het argument optioneel
         default="mijn_tekstdatabase.txt",
-        help="Het databasebestand om te openen (standaard: mijn_tekstdatabase.txt)."
+        help="Het databasebestand om te openen (standaard: mijn_tekstdatabase.txt).",
     )
     parser.add_argument(
-        "-c", "--create",
+        "-c",
+        "--create",
         action="store_true",  # Gebruik een flag om aan te geven of een nieuw bestand moet worden aangemaakt
-        help="Creëer een nieuw, leeg databasebestand. Overschrijft een bestaand bestand na bevestiging."
+        help="Creëer een nieuw, leeg databasebestand. Overschrijft een bestaand bestand na bevestiging.",
     )
 
     args = parser.parse_args()
@@ -45,16 +49,16 @@ def main():
             print(f"Waarschuwing: Bestand '{bestandsnaam}' bestaat al.")
             while True:
                 bevestiging = input("Weet u zeker dat u dit wilt overschrijven met een lege database? (j/n): ").lower()
-                if bevestiging.startswith('j'):
+                if bevestiging.startswith("j"):
                     break  # Ga door met overschrijven
-                elif bevestiging.startswith('n'):
+                elif bevestiging.startswith("n"):
                     print("Operatie geannuleerd.")
                     sys.exit(0)
 
     # Maak één database object aan. Alle operaties gaan via dit object.
     db = TextDatabase(bestandsnaam, create_new=create_new)
     toon_menu()  # Toon het menu direct bij de start
-    
+
     while True:
         try:
             aantal_items = len(db.data)
@@ -80,13 +84,13 @@ def main():
 
             except ValueError:  # Not a valid number, check for commands
                 match invoer_lower:
-                    case 'stop' | 's':
+                    case "stop" | "s":
                         break
 
-                    case 'menu' | 'm':
+                    case "menu" | "m":
                         toon_menu()
 
-                    case 'nieuw' | 'n':
+                    case "nieuw" | "n":
                         print("Voer de nieuwe tekst in. Laat een lege regel achter om op te slaan.")
                         nieuwe_tekst_regels = []
                         while True:
@@ -102,7 +106,7 @@ def main():
                         else:
                             print("Fout: Kon de nieuwe tekst niet opslaan.")
 
-                    case 'wijzig' | 'w':
+                    case "wijzig" | "w":
                         try:
                             index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt wijzigen: "))
                             if index_nummer not in db.data:
@@ -127,23 +131,29 @@ def main():
                         except ValueError:
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
 
-                    case 'verwijder' | 'v':
+                    case "verwijder" | "v":
                         try:
                             index_nummer = int(input("Voer het indexnummer in van de tekst die u wilt verwijderen: "))
                             if index_nummer not in db.data:
                                 print(f"Fout: Geen tekst gevonden voor index {index_nummer}.")
                             else:
-                                print(f"\n--- Tekst voor index {index_nummer} die verwijderd wordt ---\n{db.get_tekst(index_nummer)}\n--- Einde tekst ---\n")
+                                verwijder_bericht = (
+                                    f"\n--- Tekst voor index {index_nummer} die verwijderd wordt ---\n"
+                                    f"{db.get_tekst(index_nummer)}\n--- Einde tekst ---\n"
+                                )
+                                print(verwijder_bericht)
                                 while True:
-                                    bevestiging = input(f"Weet u zeker dat u item {index_nummer} wilt verwijderen? (j/n): ")
-                                    if bevestiging.lower().startswith('j'):
+                                    bevestiging = input(
+                                        f"Weet u zeker dat u item {index_nummer} wilt verwijderen? (j/n): "
+                                    )
+                                    if bevestiging.lower().startswith("j"):
                                         if db.verwijder_tekst(index_nummer):
                                             print(f"Item {index_nummer} succesvol verwijderd.")
                                             print(f"Totaal aantal items in de database nu: {len(db.data)}")
                                         else:
                                             print(f"Fout: Kon item {index_nummer} niet verwijderen.")
                                         break
-                                    elif bevestiging.lower().startswith('n'):
+                                    elif bevestiging.lower().startswith("n"):
                                         print(f"Verwijdering van item {index_nummer} geannuleerd.")
                                         break
                                     else:
@@ -152,7 +162,6 @@ def main():
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
                     case _:  # Handle other invalid input (including non-integer which falls through from Try)
                         print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")
-
 
         except ValueError:
             print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")

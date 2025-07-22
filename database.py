@@ -1,17 +1,19 @@
-import re
 import logging
+import re
+
 
 class TextDatabase:
     """
     Beheert een geïndexeerde tekstdatabase in een bestand.
-    
+
     Deze class bundelt de data en de operaties (lezen, schrijven, toevoegen)
     in één object.
     """
+
     def __init__(self, bestandsnaam, create_new=False):
         """
         Constructor: wordt aangeroepen als een nieuw TextDatabase object wordt gemaakt.
-        
+
         Args:
             bestandsnaam (str): Het pad naar het databasebestand.
             create_new (bool): Indien True, start met een lege database, zelfs als
@@ -32,18 +34,18 @@ class TextDatabase:
         (De underscore geeft aan dat deze methode bedoeld is voor intern gebruik).
         """
         try:
-            with open(self.bestandsnaam, 'r', encoding='utf-8') as f:
+            with open(self.bestandsnaam, encoding="utf-8") as f:
                 content = f.read()
         except FileNotFoundError:
             return {}  # Bestand bestaat nog niet, begin met een lege database
-        except IOError as e:
+        except OSError as e:
             logging.error("Fout bij lezen van '%s': %s", self.bestandsnaam, e)
             return {}
 
         geindexeerde_data = {}
-        blokken = content.split('###INDEX:')[1:]
+        blokken = content.split("###INDEX:")[1:]
         for blok in blokken:
-            match = re.match(r'\s*(\d+)\s*\n(.*)', blok, re.DOTALL)
+            match = re.match(r"\s*(\d+)\s*\n(.*)", blok, re.DOTALL)
             if match:
                 index_nummer = int(match.group(1))
                 tekst = match.group(2).strip()
@@ -53,14 +55,14 @@ class TextDatabase:
     def _schrijf_bestand(self):
         """Interne methode om de volledige dataset naar het bestand te schrijven."""
         try:
-            with open(self.bestandsnaam, 'w', encoding='utf-8') as f:
+            with open(self.bestandsnaam, "w", encoding="utf-8") as f:
                 # Sorteer op index voor een voorspelbare volgorde in het bestand
                 for index, tekst in sorted(self.data.items()):
                     f.write(f"###INDEX: {index}\n")
                     f.write(tekst)
                     f.write("\n\n")
             return True
-        except IOError as e:
+        except OSError as e:
             logging.error("Fout bij schrijven naar '%s': %s", self.bestandsnaam, e)
             return False
 

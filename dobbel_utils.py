@@ -1,7 +1,7 @@
 # /home/michel/projects/dobbelen/dobbel_utils.py
 import numpy as np
 
-def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
+def bereken_theoretische_verdeling(aantal_dobbelstenen: int, aantal_zijden: int) -> dict[int, int]:
     """
     Berekent de exacte kansverdeling met behulp van convolutie.
     Geeft het aantal combinaties voor elke mogelijke som terug.
@@ -18,7 +18,7 @@ def bereken_theoretische_verdeling(aantal_dobbelstenen, aantal_zijden):
     min_som = aantal_dobbelstenen
     return {i + min_som: combinaties for i, combinaties in enumerate(huidige_verdeling)}
 
-def bereken_kans_uiterste_worp(aantal_stenen, aantal_zijden):
+def bereken_kans_uiterste_worp(aantal_stenen: int, aantal_zijden: int) -> float:
     """
     Berekent de kans op de uiterste worp (allemaal 1'en of allemaal max).
     """

@@ -1,95 +1,90 @@
 #!/usr/bin/env python3
 """
-Een testprogramma dat willekeurige tekstblokken uit een database toont.
+Een geautomatiseerde test-suite voor de TextDatabase class.
+
+Dit script gebruikt de 'unittest' module van Python om de functionaliteit
+van de TextDatabase class te verifiëren. Het kan direct worden uitgevoerd
+vanuit de command-line en is bedoeld voor integratie in een CI/CD-workflow.
 """
 
-import argparse
-import sys
-import random
+import unittest
+import os
 from database import TextDatabase
 
-def show_random_item(db, max_index):
+class TestTextDatabase(unittest.TestCase):
     """
-    Toon een willekeurig item uit de database.
+    Test suite voor de TextDatabase class.
+
+    Deze tests zorgen ervoor dat alle database-operaties (aanmaken, lezen,
+    wijzigen, verwijderen) correct functioneren.
     """
-    # Genereer een willekeurig indexnummer
-    random_index = random.randint(1, max_index)
-    tekst = db.get_tekst(random_index)
+    test_db_file = "_test_database.txt"
 
-    # Het zou altijd een tekst moeten vinden, maar voor de zekerheid controleren we.
-    if tekst is not None:
-        print(f"\n--- Item met Index: {random_index} ---")
-        print(tekst)
-        print("--------------------------")
-    else:
-        # Onwaarschijnlijk, maar kan gebeuren als de db corrupt is.
-        print(f"\nWaarschuwing: Geen tekst gevonden voor willekeurige index {random_index}.")
+    def setUp(self):
+        """
+        Wordt voor elke test uitgevoerd. Zorgt voor een schone staat door
+        een eventueel oud testdatabase-bestand te verwijderen.
+        """
+        if os.path.exists(self.test_db_file):
+            os.remove(self.test_db_file)
 
-def run_tester(db, counter=0):
-    """
-    Start de oneindige loop die willekeurige items toont.
-    """
-    if not db.data:
-        print(f"Fout: Database '{db.bestandsnaam}' is leeg of kon niet worden gevonden.", file=sys.stderr)
-        sys.exit(1)
+    def tearDown(self):
+        """
+        Wordt na elke test uitgevoerd. Ruimt op door het testdatabase-bestand
+        te verwijderen.
+        """
+        if os.path.exists(self.test_db_file):
+            os.remove(self.test_db_file)
 
-    # De sleutels (indices) van de database. Omdat de database na verwijdering
-    # her-indexeert, zijn de sleutels aaneengesloten van 1 tot N.
-    # We kunnen dus een random getal kiezen tussen 1 en de maximale sleutel.
-    try:
-        max_index = max(db.data.keys())
-    except ValueError:
-        # Dit gebeurt als db.data leeg is, wat we hierboven al controleren.
-        print(f"Fout: Database '{db.bestandsnaam}' bevat geen items.", file=sys.stderr)
-        sys.exit(1)
+    def test_01_initialization_and_creation(self):
+        """Test het aanmaken van een nieuwe, lege database."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        self.assertEqual(db.data, {})
+        self.assertFalse(os.path.exists(self.test_db_file), "Bestand mag niet worden aangemaakt bij initialisatie")
 
-    if not counter:
-        print(f"\nDruk op [Enter] voor een willekeurig item (1-{max_index}).")
-        print("Druk op Ctrl+C om te stoppen.")
-        try:
-            while True:
-                # Wacht op de gebruiker om op Enter te drukken
-                input()
-                show_random_item(db, max_index)
-        except EOFError:
-            # Dit kan gebeuren als de gebruiker Ctrl+D gebruikt om te stoppen.
-            print("\n\nProgramma afgesloten. Tot ziens!")
-            sys.exit(0)
-        except KeyboardInterrupt:
-            print("\n\nProgramma afgesloten. Tot ziens!")
-            sys.exit(0)
-        except Exception as e:
-            print(f"\nEr is een onverwachte fout opgetreden: {e}", file=sys.stderr)
-            sys.exit(1)
-    else:
-        # Voor de testmodus, tonen we een aantal items en stoppen daarna.
-        for _ in range(counter):
-            show_random_item(db, max_index)
-def main():
-    """
-    Parse command-line argumenten en start de tester.
-    """
-    parser = argparse.ArgumentParser(
-        description="Toont willekeurige tekstblokken uit een tekst-database."
-    )
-    parser.add_argument(
-        "bestandsnaam",
-        nargs="?",  # Optioneel
-        default="mijn_tekstdatabase.txt",
-        help="Het databasebestand om te gebruiken (standaard: mijn_tekstdatabase.txt)."
-    )
-    parser.add_argument(
-        "-n", "--counter",
-        type=int,
-        default=0,
-        help="Geeft een specifiek aantal willekeurige items weer en stopt dan."
-    )
-    args = parser.parse_args()
+    def test_02_add_and_write_entry(self):
+        """Test het toevoegen van een item en het schrijven naar het bestand."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        tekst1 = "Dit is de eerste testtekst."
+        result = db.voeg_tekst_toe(tekst1)
+        self.assertTrue(result, "Schrijven naar bestand moet succesvol zijn")
+        self.assertEqual(len(db.data), 1)
+        self.assertEqual(db.get_tekst(1), tekst1)
+        self.assertTrue(os.path.exists(self.test_db_file), "Bestand moet bestaan na schrijven")
 
-    # Maak het database object aan. create_new is False omdat we alleen lezen.
-    db = TextDatabase(args.bestandsnaam, create_new=False)
-    run_tester(db, args.counter)
+    def test_03_read_from_existing_file(self):
+        """Test of data correct wordt geladen uit een bestaand bestand."""
+        db1 = TextDatabase(self.test_db_file, create_new=True)
+        db1.voeg_tekst_toe("Data om te bewaren")
+        db2 = TextDatabase(self.test_db_file, create_new=False)
+        self.assertEqual(len(db2.data), 1)
+        self.assertEqual(db2.get_tekst(1), "Data om te bewaren")
+        self.assertIsNone(db2.get_tekst(99), "get_tekst voor niet-bestaande index moet None zijn")
 
+    def test_04_modify_entry(self):
+        """Test het wijzigen van een bestaand item."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        db.voeg_tekst_toe("Originele tekst")
+        nieuwe_tekst = "Gewijzigde tekst"
+        result = db.wijzig_tekst(1, nieuwe_tekst)
+        self.assertTrue(result, "Wijzigen moet succesvol zijn")
+        self.assertEqual(db.get_tekst(1), nieuwe_tekst)
+        self.assertFalse(db.wijzig_tekst(99, "Zal niet werken"), "Moet falen voor niet-bestaande index")
+
+    def test_05_delete_and_reindex(self):
+        """Test het verwijderen van een item en de daaropvolgende herindexering."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        db.voeg_tekst_toe("Item 1"); db.voeg_tekst_toe("Item 2"); db.voeg_tekst_toe("Item 3")
+        result = db.verwijder_tekst(2)
+        self.assertTrue(result, "Verwijderen moet succesvol zijn")
+        self.assertEqual(len(db.data), 2, "Er moeten 2 items overblijven")
+        self.assertEqual(db.get_tekst(1), "Item 1")
+        self.assertEqual(db.get_tekst(2), "Item 3", "Item 3 moet nu index 2 hebben")
+        self.assertIsNone(db.get_tekst(3), "Oude index 3 moet leeg zijn")
+        self.assertEqual(list(db.data.keys()), [1, 2])
+        self.assertFalse(db.verwijder_tekst(99), "Moet falen voor niet-bestaande index")
 
 if __name__ == "__main__":
-    main()
+    # Dit maakt het script uitvoerbaar en start de test runner.
+    # De test runner vindt automatisch alle methodes die met 'test_' beginnen.
+    unittest.main(verbosity=2)

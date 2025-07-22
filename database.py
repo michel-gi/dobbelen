@@ -1,4 +1,5 @@
 import re
+import logging
 
 class TextDatabase:
     """
@@ -20,10 +21,10 @@ class TextDatabase:
         self.bestandsnaam = bestandsnaam
         if create_new:
             self.data = {}
-            print(f"Nieuwe, lege database '{self.bestandsnaam}' wordt aangemaakt.")
+            logging.info("Nieuwe, lege database '%s' wordt aangemaakt.", self.bestandsnaam)
         else:
             self.data = self._lees_bestand()
-            print(f"Database '{self.bestandsnaam}' geladen. {len(self.data)} items gevonden.")
+            logging.info("Database '%s' geladen. %d items gevonden.", self.bestandsnaam, len(self.data))
 
     def _lees_bestand(self):
         """
@@ -34,9 +35,9 @@ class TextDatabase:
             with open(self.bestandsnaam, 'r', encoding='utf-8') as f:
                 content = f.read()
         except FileNotFoundError:
-            return {} # Bestand bestaat nog niet, begin met een lege database
-        except Exception as e:
-            print(f"Fout bij lezen van '{self.bestandsnaam}': {e}")
+            return {}  # Bestand bestaat nog niet, begin met een lege database
+        except IOError as e:
+            logging.error("Fout bij lezen van '%s': %s", self.bestandsnaam, e)
             return {}
 
         geindexeerde_data = {}
@@ -60,7 +61,7 @@ class TextDatabase:
                     f.write("\n\n")
             return True
         except IOError as e:
-            print(f"Fout bij schrijven naar '{self.bestandsnaam}': {e}")
+            logging.error("Fout bij schrijven naar '%s': %s", self.bestandsnaam, e)
             return False
 
     def get_tekst(self, index_nummer):

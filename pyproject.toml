@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 119
+target-version = "py312"
+
+[tool.ruff.lint]
+# E (pycodestyle errors), F (Pyflakes), I (isort), T20 (flake8-tidy-imports - print)
+select = ["E", "F", "I", "T20"]
+
+[tool.ruff.lint.per-file-ignores]
+# PyInstaller's version.py uses undefined names that ruff would flag as F821.
+"version.py" = ["F821"]

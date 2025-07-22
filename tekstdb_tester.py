@@ -74,7 +74,9 @@ class TestTextDatabase(unittest.TestCase):
     def test_05_delete_and_reindex(self):
         """Test het verwijderen van een item en de daaropvolgende herindexering."""
         db = TextDatabase(self.test_db_file, create_new=True)
-        db.voeg_tekst_toe("Item 1"); db.voeg_tekst_toe("Item 2"); db.voeg_tekst_toe("Item 3")
+        db.voeg_tekst_toe("Item 1")
+        db.voeg_tekst_toe("Item 2")
+        db.voeg_tekst_toe("Item 3")
         result = db.verwijder_tekst(2)
         self.assertTrue(result, "Verwijderen moet succesvol zijn")
         self.assertEqual(len(db.data), 2, "Er moeten 2 items overblijven")

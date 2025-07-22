@@ -5,7 +5,6 @@ Een Python-script om de kansverdeling van dobbelsteenworpen te simuleren.
 
 import argparse
 import sys
-import random
 import tkinter as tk
 from tkinter import ttk, messagebox
 import numpy as np
@@ -16,9 +15,10 @@ from dobbel_utils import bereken_theoretische_verdeling
 try:
     import matplotlib.pyplot as plt
 except ImportError:
-    print("Fout: De 'matplotlib' bibliotheek is niet gevonden.")
-    print("Installeer deze met het commando: python3 -m pip install matplotlib")
-    exit()
+    # This runs before any GUI is initialized, so print is acceptable here.
+    print("Fout: De 'matplotlib' bibliotheek is niet gevonden.")  # noqa: T201
+    print("Installeer deze met het commando: python3 -m pip install matplotlib")  # noqa: T201
+    sys.exit(1)
 
 def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
     """
@@ -33,7 +33,9 @@ def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
         collections.Counter: Een object met de som van de worpen als sleutel
                              en de frequentie als waarde.
     """
-    print(f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen...".replace(',', '.'))
+    # This print is for direct user feedback in CLI mode, which is a primary function.
+    # We can leave it, or use logging if we configure a handler for stdout.
+    print(f"Simulatie gestart: {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen...".replace(',', '.'))  # noqa: T201
 
     # Genereer alle worpen in één keer met NumPy voor hoge prestaties
     worpen = np.random.randint(1, aantal_zijden + 1, size=(aantal_worpen, aantal_dobbelstenen))
@@ -44,10 +46,10 @@ def simuleer_worpen(aantal_dobbelstenen, aantal_worpen, aantal_zijden):
 
 def toon_verdeling_tekstueel(resultaten, schaal=100):
     """Toont de verdeling als een eenvoudige tekstuele histogram."""
-    print("\n--- Tekstuele Verdeling van de Resultaten ---")
+    print("\n--- Tekstuele Verdeling van de Resultaten ---")  # noqa: T201
     # Sorteer de resultaten op basis van de som (de sleutel)
     if not resultaten:
-        print("Geen resultaten om te tonen.")
+        print("Geen resultaten om te tonen.")  # noqa: T201
         return
 
     gesorteerde_resultaten = sorted(resultaten.items())
@@ -61,7 +63,7 @@ def toon_verdeling_tekstueel(resultaten, schaal=100):
         balk_lengte = int((frequentie / max_frequentie) * schaal) if max_frequentie > 0 else 0
         balk = '#' * balk_lengte
         percentage = (frequentie / totaal_worpen) * 100
-        print(f"Som {som:2d}: {frequentie:7,d} keer ({percentage:5.2f}%) | {balk}".replace(',', '.'))
+        print(f"Som {som:2d}: {frequentie:7,d} keer ({percentage:5.2f}%) | {balk}".replace(',', '.'))  # noqa: T201
 
 def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_worpen, aantal_zijden, theoretische_verdeling=None):
     """
@@ -78,7 +80,9 @@ def toon_verdeling_grafisch(simulatie_resultaten, aantal_dobbelstenen, aantal_wo
     plt.bar(sommen, frequenties, color='skyblue', edgecolor='black', label='Simulatie')
 
     # Voeg titels en labels toe
-    plt.title(f'Verdeling van {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen'.replace(',', '.'))
+    plt.title(
+        f'Verdeling van {aantal_worpen:,} worpen met {aantal_dobbelstenen} d{aantal_zijden}-dobbelstenen'.replace(',', '.')
+    )
     plt.xlabel('Som van de ogen')
     plt.ylabel('Frequentie')
 

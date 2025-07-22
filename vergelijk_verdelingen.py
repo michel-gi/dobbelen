@@ -5,6 +5,7 @@ aantallen dobbelstenen te berekenen en te vergelijken in één grafiek.
 """
 
 import argparse
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from dobbel_utils import bereken_theoretische_verdeling
@@ -30,8 +31,8 @@ def main():
     args = parser.parse_args()
 
     if args.min_stenen > args.max_stenen:
-        print("Fout: --min-stenen kan niet groter zijn dan --max-stenen.")
-        exit(1)
+        print("Fout: --min-stenen kan niet groter zijn dan --max-stenen.")  # noqa: T201
+        sys.exit(1)
 
     # Maak de plot aan
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -44,7 +45,7 @@ def main():
         sommen = list(verdeling.keys())
         combinaties = list(verdeling.values())
 
-        # 2. Normaliseer de y-as naar kansen (belangrijk voor vergelijking!)
+        # 2. Normaliseer de y-as naar kansen (belangrijk voor vergelijking!).
         totaal_combinaties = sum(combinaties) # Gelijk aan zijden**aantal_stenen
         kansen = [c / totaal_combinaties for c in combinaties]
 
@@ -65,7 +66,7 @@ def main():
     # Zorg dat de y-as bij 0 begint
     ax.set_ylim(bottom=0)
 
-    print("Grafiek wordt gegenereerd...")
+    print("Grafiek wordt gegenereerd...")  # noqa: T201
     plt.show()
 
 if __name__ == "__main__":

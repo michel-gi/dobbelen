@@ -10,7 +10,7 @@ jobs:
   delete-runs:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete workflow runs older than 30 days
+      - name: Delete workflow runs older than 14 days
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

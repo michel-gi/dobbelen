@@ -94,6 +94,8 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
+        set -ex # Exit on error, print commands
+
         # Start met de basis-argumenten
         PYINSTALLER_ARGS="--onefile"
 
@@ -145,30 +147,32 @@ jobs:
 
     - name: Prepare files for release
       run: |
+        set -e # Exit immediately if a command exits with a non-zero status.
         mkdir release-assets
         cd artifacts
         for dir in *; do
           if [[ ! -d "$dir" ]]; then continue; fi
 
-          # Pak het ene bestand uit de artifact-map
+          # Find the single file within the artifact directory.
           file_path=$(find "$dir" -type f -print -quit)
           if [[ -z "$file_path" ]]; then continue; fi
 
-          # Construeer de nieuwe, unieke bestandsnaam op basis van de mapnaam
-          # bv. "dobbelsteen_simulatie-Windows" -> "dobbelsteen_simulatie-windows.exe"
-          if [[ "$dir" == *-Windows ]]; then
-            os="windows"
-            script_name=${dir%-Windows}
-            ext=".exe"
-          elif [[ "$dir" == *-Linux ]]; then
-            os="linux"
-            script_name=${dir%-Linux}
-            ext=""
-          # elif [[ "$dir" == *-macOS ]]; then
-          #   os="macos"
-          #   script_name=${dir%-macOS}
-          #   ext=""
-          fi # macOS build is disabled for now
+          # Construct the new, unique filename based on the directory name.
+          # e.g., "dobbelsteen_simulatie-Windows" -> "dobbelsteen_simulatie-windows.exe"
+          case "$dir" in
+            *-Windows)
+              os="windows"; script_name=${dir%-Windows}; ext=".exe" ;;
+            *-Linux)
+              os="linux"; script_name=${dir%-Linux}; ext="" ;;
+            *-macOS)
+              os="macos"; script_name=${dir%-macOS}; ext="" ;;
+            *)
+              echo "Warning: Unrecognized artifact directory format: $dir"
+              continue
+              ;;
+          esac
+
+          # Move and rename the file to the release-assets directory.
           mv "$file_path" "../release-assets/${script_name}-${os}${ext}"
         done
       shell: bash

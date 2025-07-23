@@ -16,5 +16,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 14
-          # This is the key parameter:
-          keep_minimum_runs: 2 # Always keep at least the most recent 2 runs
+          # Always keep at least the 2 most recent runs for each workflow
+          keep_minimum_runs: 2

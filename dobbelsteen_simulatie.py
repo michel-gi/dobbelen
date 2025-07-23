@@ -164,7 +164,7 @@ class DobbelsteenApp:
 
         # Gebruik ttk voor modernere widgets
         self.frame = ttk.Frame(master, padding="10")
-        self.frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.frame.grid(row=0, column=0, sticky="nsew")
 
         # Invoervelden en labels
         ttk.Label(self.frame, text="Aantal dobbelstenen:").grid(column=0, row=0, sticky=tk.W, pady=2)

@@ -162,18 +162,18 @@ jobs:
           if [[ -z "$file_path" ]]; then continue; fi
 
           # Construeer de nieuwe, unieke bestandsnaam op basis van de mapnaam
-          # bv. "dobbelsteen_simulatie-windows-latest" -> "dobbelsteen_simulatie-windows.exe"
-          if [[ "$dir" == *-windows-latest ]]; then
+          # bv. "dobbelsteen_simulatie-Windows" -> "dobbelsteen_simulatie-windows.exe"
+          if [[ "$dir" == *-Windows ]]; then
             os="windows"
-            script_name=${dir%-windows-latest}
+            script_name=${dir%-Windows}
             ext=".exe"
-          elif [[ "$dir" == *-ubuntu-latest ]]; then
+          elif [[ "$dir" == *-Linux ]]; then
             os="linux"
-            script_name=${dir%-ubuntu-latest}
+            script_name=${dir%-Linux}
             ext=""
-          # elif [[ "$dir" == *-macos-latest ]]; then
+          # elif [[ "$dir" == *-macOS ]]; then
           #   os="macos"
-          #   script_name=${dir%-macos-latest}
+          #   script_name=${dir%-macOS}
           #   ext=""
           fi # macOS build is disabled for now
           mv "$file_path" "../release-assets/${script_name}-${os}${ext}"

@@ -71,7 +71,6 @@ def main():
             gebruikers_invoer = input(prompt_tekst)
             invoer_lower = gebruikers_invoer.lower()
 
-
             try:
                 index_nummer = int(gebruikers_invoer)
                 tekst = db.get_tekst(index_nummer)

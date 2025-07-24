@@ -14,9 +14,25 @@ jobs:
 
     steps:
       - name: Delete releases older than the 3 most recent
-        uses: dev-drpr/delete-older-releases@v0.4.0
-        with:
-          keep_latest: 3
-          delete_tags: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          releases_to_keep=3
+
+          # List all release tags, skip the ones to keep, and store the rest.
+          # The `gh` CLI is pre-installed on all GitHub-hosted runners and
+          # is automatically authenticated. It sorts releases newest-first by default.
+          tags_to_delete=$(gh release list --limit 100 --json tagName --jq '.[].tagName' | tail -n +$((releases_to_keep + 1)))
+
+          if [[ -z "$tags_to_delete" ]]; then
+            echo "No old releases to delete."
+            exit 0
+          fi
+
+          echo "The following releases (and their tags) will be deleted:"
+          echo "$tags_to_delete"
+
+          echo "$tags_to_delete" | while IFS= read -r tag; do
+            gh release delete "$tag" --cleanup-tag --yes
+          done

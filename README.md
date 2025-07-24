@@ -89,7 +89,16 @@ If you prefer to build the applications yourself, you can do so by following the
     pip install -r requirements.txt
     ```
 
-4. **Build with PyInstaller:**
+4. **Set up pre-commit hooks (for development):**
+   This project uses `pre-commit` to ensure code quality. After installing the dependencies, run the following command to set up the Git hooks:
+
+    ```bash
+    pre-commit install
+    ```
+
+   This will run checks automatically every time you make a new commit.
+
+5. **Build with PyInstaller:**
     The project uses PyInstaller to create the executables. The build process is defined in the GitHub Actions workflow at `.github/workflows/build.yml`.
 
     To build a specific script, you can run one of the following commands:

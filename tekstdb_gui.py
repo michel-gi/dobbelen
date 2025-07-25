@@ -125,7 +125,9 @@ class TekstDbGuiApp:
         # Bestand menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Bestand", menu=file_menu, underline=0)
+        file_menu.add_command(label="Nieuwe database...", command=self.new_database, underline=0)
         file_menu.add_command(label="Open...", command=self.open_database, accelerator="Ctrl+O", underline=0)
+        file_menu.add_separator()
         file_menu.add_command(label="Opslaan", command=self.save_database, accelerator="Ctrl+S", underline=0)
         file_menu.add_command(
             label="Opslaan als...", command=self.save_database_as, accelerator="Ctrl+Shift+S", underline=1
@@ -395,6 +397,28 @@ class TekstDbGuiApp:
         # De trace op search_var zorgt ervoor dat perform_search wordt aangeroepen.
 
     # --- Commando's (Bestand) ---
+
+    def new_database(self):
+        """Vraagt om een bestandsnaam en creëert een nieuwe, lege database."""
+        filepath = filedialog.asksaveasfilename(
+            title="Nieuwe database aanmaken",
+            filetypes=(("Tekstbestanden", "*.txt"), ("Alle bestanden", "*.*")),
+            defaultextension=".txt",
+        )
+        if not filepath:
+            return  # Gebruiker heeft geannuleerd
+
+        try:
+            # Maak een nieuw, leeg database object aan.
+            # Het bestand zelf wordt pas aangemaakt bij de eerste schrijf-actie.
+            self.db = TextDatabase(filepath, create_new=True)
+            self._update_title()
+            self.refresh_item_list()  # Toont de lege staat in de GUI
+
+            # Vraag direct om het eerste item in te voeren, zoals gevraagd.
+            self.nieuw_item()
+        except Exception as e:
+            messagebox.showerror("Fout bij aanmaken", f"Kon de nieuwe database niet initialiseren.\nFout: {e}")
 
     def open_database(self):
         """Opent een bestandsdialoog om een nieuwe database te laden."""

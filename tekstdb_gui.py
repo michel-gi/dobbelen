@@ -88,10 +88,11 @@ class TekstDbGuiApp:
     def __init__(self, master):
         """Initialiseert de applicatie."""
         self.master = master
-        master.geometry("600x400")  # Startgrootte
+        master.geometry("800x600")  # Startgrootte (iets groter voor de preview)
 
         # Variabele voor de zoekbalk
         self.search_var = tk.StringVar()
+        self.preview_text = None  # Placeholder voor de preview widget
 
         # --- Database initialisatie ---
         # We gebruiken een hardcoded bestandsnaam, dit kan later dynamisch.
@@ -185,27 +186,58 @@ class TekstDbGuiApp:
 
         ttk.Button(search_frame, text="Wissen", command=self.clear_search).pack(side=tk.LEFT, padx=(5, 0))
 
-        # --- Frame voor de lijst en scrollbar ---
-        list_frame = ttk.Frame(self.main_frame)
-        # Plaats dit frame boven de knoppen
-        list_frame.pack(pady=5, padx=0, fill=tk.BOTH, expand=True, side=tk.TOP)
+        # --- PanedWindow voor een resizable scheiding tussen lijst en preview ---
+        paned_window = ttk.PanedWindow(self.main_frame, orient=tk.VERTICAL)
+        paned_window.pack(pady=5, padx=0, fill=tk.BOTH, expand=True, side=tk.TOP)
+
+        # --- Frame voor de lijst en scrollbar (bovenste paneel) ---
+        list_frame = ttk.Frame(paned_window)
+        paned_window.add(list_frame, weight=4)  # Geef de lijst meer initieel gewicht (groter)
 
         # Scrollbar
         scrollbar = ttk.Scrollbar(list_frame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Listbox voor de items
-        self.item_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar.set, selectmode=tk.SINGLE)
+        self.item_listbox = tk.Listbox(
+            list_frame,
+            yscrollcommand=scrollbar.set,
+            selectmode=tk.SINGLE,
+            exportselection=False,
+            height=25,  # Stel een initiële hoogte in (in tekstregels)
+        )
         self.item_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Koppel scrollbar aan listbox
         scrollbar.config(command=self.item_listbox.yview)
 
+        # --- Frame voor de preview (onderste paneel) ---
+        preview_frame = ttk.Frame(paned_window)
+        paned_window.add(preview_frame, weight=1)  # Geef de preview minder gewicht bij resizen
+
+        preview_scrollbar = ttk.Scrollbar(preview_frame)
+        preview_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.preview_text = tk.Text(
+            preview_frame,
+            yscrollcommand=preview_scrollbar.set,
+            wrap=tk.WORD,
+            state=tk.DISABLED,
+            height=8,  # Stel een initiële hoogte in (in tekstregels)
+        )
+        self.preview_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        preview_scrollbar.config(command=self.preview_text.yview)
+
         # Voeg dubbelklik-event toe om een item te wijzigen
         self.item_listbox.bind("<Double-1>", lambda event: self.wijzig_item())
 
-        # Update de knopstatus wanneer de selectie verandert
-        self.item_listbox.bind("<<ListboxSelect>>", self._update_button_states)
+        # Update de knopstatus en preview wanneer de selectie verandert.
+        # <<ListboxSelect>> wordt geactiveerd door zowel muisklikken als pijltjestoetsen.
+        self.item_listbox.bind("<<ListboxSelect>>", self._on_selection_change)
+        # Forceer de selectie om de 'actieve' cursor (stippellijn) te volgen bij gebruik van pijltjestoetsen.
+        # Dit zorgt ervoor dat <<ListboxSelect>> ook consistent wordt geactiveerd.
+        self.item_listbox.bind("<KeyRelease-Up>", self._force_selection_on_arrow)
+        self.item_listbox.bind("<KeyRelease-Down>", self._force_selection_on_arrow)
 
     def bind_keys(self):
         """Bindt toetsen aan de commando's."""
@@ -218,6 +250,9 @@ class TekstDbGuiApp:
         self.master.bind("<Control-w>", lambda event: self.wijzig_item())
         self.master.bind("<Control-v>", lambda event: self.verwijder_item())
         self.master.bind("<Control-q>", lambda event: self.sluit_applicatie())
+
+        # Bind de Delete-toets aan de verwijder-functie voor extra gebruiksgemak
+        self.master.bind("<Delete>", lambda event: self.verwijder_item())
 
     # --- Data-operaties ---
 
@@ -243,6 +278,7 @@ class TekstDbGuiApp:
                 self.item_listbox.insert(tk.END, f"{index: >3}: {preview}")
 
         self._update_button_states()
+        self._update_preview_pane()
         self._update_status_bar()
 
     def perform_search(self, *args):
@@ -255,8 +291,6 @@ class TekstDbGuiApp:
             items_to_show = {index: text for index, text in self.db.data.items() if search_term in text.lower()}
 
         self._populate_listbox(items_to_show)
-        # Na het zoeken is er geen selectie, dus update de knoppen
-        self._update_button_states()
 
     def _get_selected_index(self):
         """Haalt het indexnummer op van het geselecteerde item in de listbox."""
@@ -271,6 +305,63 @@ class TekstDbGuiApp:
             return int(index_str)
         except (ValueError, IndexError):
             return None  # Mocht er iets misgaan met de parsing
+
+    def _force_selection_on_arrow(self, event=None):
+        """
+        Werkt de selectie bij om overeen te komen met het actieve item (focus met stippellijn).
+
+        Dit wordt aangeroepen na een pijltjestoets-event. De standaard `Listbox`
+        verandert alleen het 'actieve' item, niet de 'selectie'. Deze methode
+        synchroniseert de twee, wat er vervolgens voor zorgt dat het
+        `<<ListboxSelect>>` event wordt geactiveerd.
+        """
+        try:
+            # Haal de index op van het item dat de focus heeft (stippellijn)
+            active_index = self.item_listbox.index(tk.ACTIVE)
+            current_selection = self.item_listbox.curselection()
+
+            # Voer alleen uit als de selectie niet al overeenkomt met het actieve item
+            if not current_selection or current_selection[0] != active_index:
+                self.item_listbox.selection_clear(0, tk.END)
+                self.item_listbox.selection_set(active_index)
+                # Genereer het event handmatig om de update-keten te starten
+                self.item_listbox.event_generate("<<ListboxSelect>>")
+
+        except tk.TclError:
+            # Dit kan gebeuren als er geen items in de lijst zijn of geen actief item is.
+            pass
+
+    def _on_selection_change(self, event=None):
+        """
+        Plant de UI-update in om te draaien nadat het huidige event is verwerkt.
+
+        Dit lost potentiële timing-problemen op waarbij de selectie-status nog niet
+        volledig is bijgewerkt op het exacte moment dat het event wordt geactiveerd.
+        De `after_idle` methode zorgt ervoor dat de update-logica wordt uitgevoerd
+        zodra Tkinter klaar is met de huidige taken, wat garandeert dat de
+        selectie in de listbox correct is.
+        """
+        self.master.after_idle(self._perform_selection_update)
+
+    def _perform_selection_update(self):
+        """Voert de daadwerkelijke UI-updates uit na een selectiewijziging."""
+        self._update_button_states()
+        self._update_preview_pane()
+
+    def _update_preview_pane(self):
+        """Werkt het preview-paneel bij met de tekst van het geselecteerde item."""
+        # Maak de preview eerst leeg
+        self.preview_text.config(state=tk.NORMAL)
+        self.preview_text.delete("1.0", tk.END)
+
+        index_nummer = self._get_selected_index()
+        if index_nummer:
+            tekst = self.db.get_tekst(index_nummer)
+            if tekst is not None:
+                self.preview_text.insert(tk.END, tekst)
+
+        # Maak het tekstveld weer read-only om onbedoelde wijzigingen te voorkomen
+        self.preview_text.config(state=tk.DISABLED)
 
     def _update_button_states(self, event=None):
         """Updates de status van knoppen en menu-items op basis van de selectie."""

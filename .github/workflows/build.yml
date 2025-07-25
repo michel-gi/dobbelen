@@ -61,6 +61,8 @@ jobs:
             type: gui
           - name: plot_eindpunt_kansen
             type: gui
+          - name: tekstdb_gui
+            type: gui
           - name: tekstdb_bewerk
             type: console
           - name: tekstdb_tester

@@ -49,7 +49,7 @@ class TextEntryDialog(tk.Toplevel):
         self.text = tk.Text(text_frame, width=60, height=15, wrap=tk.WORD)
         self.text.insert("1.0", initial_text)
         scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.text.yview)
-        self.text.config(yscrollcommand=scrollbar.set)
+        self.text["yscrollcommand"] = scrollbar.set
 
         self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -120,7 +120,7 @@ class TekstDbGuiApp:
     def create_menu(self):
         """Maakt de menubalk voor de applicatie."""
         menubar = tk.Menu(self.master)
-        self.master.config(menu=menubar)
+        self.master["menu"] = menubar
 
         # Bestand menu
         file_menu = tk.Menu(menubar, tearoff=0)
@@ -211,7 +211,7 @@ class TekstDbGuiApp:
         self.item_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Koppel scrollbar aan listbox
-        scrollbar.config(command=self.item_listbox.yview)
+        scrollbar["command"] = self.item_listbox.yview
 
         # --- Frame voor de preview (onderste paneel) ---
         preview_frame = ttk.Frame(paned_window)
@@ -228,7 +228,7 @@ class TekstDbGuiApp:
             height=8,  # Stel een initiële hoogte in (in tekstregels)
         )
         self.preview_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        preview_scrollbar.config(command=self.preview_text.yview)
+        preview_scrollbar["command"] = self.preview_text.yview
 
         # Voeg dubbelklik-event toe om een item te wijzigen
         self.item_listbox.bind("<Double-1>", lambda event: self.wijzig_item())
@@ -270,9 +270,9 @@ class TekstDbGuiApp:
 
         if not items_to_display:
             self.item_listbox.insert(tk.END, "Database is leeg. Gebruik 'Nieuw' om een item toe te voegen.")
-            self.item_listbox.config(fg="gray")  # Maak de tekst grijs
+            self.item_listbox["fg"] = "gray"  # Maak de tekst grijs
         else:
-            self.item_listbox.config(fg="black")  # Zet de kleur terug naar standaard
+            self.item_listbox["fg"] = "black"  # Zet de kleur terug naar standaard
             # Sorteer op index en vul de lijst
             for index, tekst in sorted(items_to_display.items()):
                 preview = tekst.replace("\n", " ").strip()
@@ -353,17 +353,17 @@ class TekstDbGuiApp:
     def _update_preview_pane(self):
         """Werkt het preview-paneel bij met de tekst van het geselecteerde item."""
         # Maak de preview eerst leeg
-        self.preview_text.config(state=tk.NORMAL)
-        self.preview_text.delete("1.0", tk.END)
+        self.preview_text["state"] = tk.NORMAL  # pyright: ignore[reportOptionalSubscript]
+        self.preview_text.delete("1.0", tk.END)  # pyright: ignore[reportOptionalMemberAccess]
 
         index_nummer = self._get_selected_index()
         if index_nummer:
             tekst = self.db.get_tekst(index_nummer)
             if tekst is not None:
-                self.preview_text.insert(tk.END, tekst)
+                self.preview_text.insert(tk.END, tekst)  # pyright: ignore[reportOptionalMemberAccess]
 
         # Maak het tekstveld weer read-only om onbedoelde wijzigingen te voorkomen
-        self.preview_text.config(state=tk.DISABLED)
+        self.preview_text["state"] = tk.DISABLED  # pyright: ignore[reportOptionalSubscript]
 
     def _update_button_states(self, event=None):
         """Updates de status van knoppen en menu-items op basis van de selectie."""
@@ -373,8 +373,8 @@ class TekstDbGuiApp:
             new_state = tk.DISABLED
 
         # Update knoppen
-        self.btn_wijzig.config(state=new_state)
-        self.btn_verwijder.config(state=new_state)
+        self.btn_wijzig["state"] = new_state
+        self.btn_verwijder["state"] = new_state
 
         # Update menu-items
         self.edit_menu.entryconfig("Wijzig item...", state=new_state)
@@ -384,7 +384,7 @@ class TekstDbGuiApp:
         """Updates de tekst in de statusbalk."""
         aantal_items = len(self.db.data)
         status_text = f"  Totaal: {aantal_items} items"
-        self.status_bar.config(text=status_text)
+        self.status_bar["text"] = status_text
 
     def focus_search(self, event=None):
         """Zet de focus op de zoekbalk."""

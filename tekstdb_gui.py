@@ -475,8 +475,7 @@ class TekstDbGuiApp:
                 self.refresh_item_list()
             else:
                 messagebox.showerror("Fout", "Kon het nieuwe item niet opslaan in het bestand.")
-        else:
-            print("Toevoegen geannuleerd door gebruiker.")  # Optionele feedback in console
+        # Geen bericht nodig bij annuleren; de gebruiker weet dit.
 
     def wijzig_item(self):
         """Opent een dialoogvenster om een geselecteerd item te wijzigen."""
@@ -506,8 +505,7 @@ class TekstDbGuiApp:
                 self.refresh_item_list()
             else:
                 messagebox.showerror("Fout", f"Kon item {index_nummer} niet wijzigen.")
-        else:
-            print(f"Wijziging van item {index_nummer} geannuleerd.")
+        # Geen bericht nodig bij annuleren.
 
     def verwijder_item(self):
         """Verwijdert het geselecteerde item na bevestiging."""

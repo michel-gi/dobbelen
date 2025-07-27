@@ -32,3 +32,6 @@ dist/
 examples
 mijn_tekstdatabase.txt
 _test_database.txt
+
+# Example code, instructions and demo
+examples/

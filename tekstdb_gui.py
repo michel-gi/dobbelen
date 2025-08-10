@@ -284,13 +284,18 @@ class TekstDbGuiApp:
         self._update_status_bar()
 
     def perform_search(self, *args):
-        """Filtert de lijst op basis van de zoekterm."""
-        search_term = self.search_var.get().lower()
+        """Filtert de lijst op basis van de zoekterm in de tekst of het indexnummer."""
+        search_term = self.search_var.get()
 
         if not search_term:
             items_to_show = self.db.data
         else:
-            items_to_show = {index: text for index, text in self.db.data.items() if search_term in text.lower()}
+            search_term_lower = search_term.lower()
+            items_to_show = {
+                index: text
+                for index, text in self.db.data.items()
+                if search_term_lower in text.lower() or str(index).startswith(search_term)
+            }
 
         self._populate_listbox(items_to_show)
 
@@ -498,14 +503,20 @@ class TekstDbGuiApp:
         )
         nieuwe_tekst = dialog.result
 
-        # Controleer op None; een lege string is een geldige wijziging.
-        if nieuwe_tekst is not None:
-            if self.db.wijzig_tekst(index_nummer, nieuwe_tekst):
-                messagebox.showinfo("Succes", f"Item {index_nummer} succesvol gewijzigd.")
-                self.refresh_item_list()
-            else:
-                messagebox.showerror("Fout", f"Kon item {index_nummer} niet wijzigen.")
-        # Geen bericht nodig bij annuleren.
+        # Controleer of de gebruiker heeft geannuleerd (result is None)
+        if nieuwe_tekst is None:
+            return  # Doe niets
+
+        # Controleer of de resulterende tekst leeg is.
+        if not nieuwe_tekst:
+            messagebox.showwarning("Ongeldige invoer", "Een item mag niet leeg zijn. De wijziging is niet opgeslagen.")
+            return
+
+        if self.db.wijzig_tekst(index_nummer, nieuwe_tekst):
+            messagebox.showinfo("Succes", f"Item {index_nummer} succesvol gewijzigd.")
+            self.refresh_item_list()
+        else:
+            messagebox.showerror("Fout", f"Kon item {index_nummer} niet wijzigen.")
 
     def verwijder_item(self):
         """Verwijdert het geselecteerde item na bevestiging."""

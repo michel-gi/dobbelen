@@ -11,6 +11,7 @@ This project consists of several standalone applications:
 * **`dobbelsteen_simulatie`**: The main application for running various dice roll simulations and visualizing the outcomes. It includes an icon and version information.
 * **`vergelijk_verdelingen`**:  A tool to visually compare different probability distributions generated from simulations.
 * **`plot_eindpunt_kansen`**:  An application to plot the probabilities of final outcomes in multi-step simulations.
+* **`tekstdb_gui`**: A graphical user interface for managing the text database.
 
 ### Console Applications
 

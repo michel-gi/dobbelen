@@ -84,6 +84,56 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Generate Version File for Windows
+      if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+      run: |
+        # Get version from tag, remove 'v' prefix.
+        # This script generates a version.txt file in a format suitable for PyInstaller's
+        # --version-file option. It extracts the version from the Git tag, pads it to
+        # four components if necessary, and then embeds it into a standard Windows
+        # version information structure.
+        #
+        # The version.txt file defines metadata for the executable, such as file version,
+        # product version, company name, and copyright information, which can be viewed
+        # in the file properties on Windows.
+        #
+        # Note: This step uses 'bash' shell for its advanced string manipulation capabilities.
+
+        VERSION_STR="${{ github.ref_name }}"
+        VERSION=${VERSION_STR#v}
+        # PyInstaller version file needs 4 components. Pad with .0 if needed.
+        IFS='.' read -r -a V_PARTS <<< "$VERSION"
+        V1=${V_PARTS[0]:-0}
+        V2=${V_PARTS[1]:-0}
+        V3=${V_PARTS[2]:-0}
+        V4=${V_PARTS[3]:-0}
+        VERSION_TUPLE="($V1, $V2, $V3, $V4)"
+        VERSION_STRING="$V1.$V2.$V3.$V4"
+
+        echo "Generating version.txt with version $VERSION_STRING"
+
+        # Create the version file content. This is a Python-like structure that PyInstaller
+        # parses to embed version information into the Windows executable.
+        printf "# UTF-8\n" > version.txt
+        printf "VSVersionInfo(\n" >> version.txt
+        printf "  ffi=FixedFileInfo(\n" >> version.txt
+        printf "    filevers=%s,\n" "$VERSION_TUPLE" >> version.txt
+        printf "    prodvers=%s,\n" "$VERSION_TUPLE" >> version.txt
+        printf "    mask=0x3f,\n" >> version.txt
+        printf "    flags=0x0,\n" >> version.txt
+        printf "    OS=0x40004,\n" >> version.txt
+        printf "    fileType=0x1,\n" >> version.txt
+        printf "    subtype=0x0,\n" >> version.txt
+        printf "    date=(0, 0)\n" >> version.txt
+        printf "  ),\n" >> version.txt
+        printf "  kids=[\n" >> version.txt
+        printf "    StringFileInfo([StringTable(u'040904B0', [StringStruct(u'CompanyName', u'Dobbelen Project'), StringStruct(u'FileDescription', u'Dobbelsteen Simulatie'), StringStruct(u'FileVersion', u'%s'), StringStruct(u'InternalName', u'dobbelsteen_simulatie'), StringStruct(u'LegalCopyright', u'Copyright © Michel'), StringStruct(u'OriginalFilename', u'dobbelsteen_simulatie.exe'), StringStruct(u'ProductName', u'Dobbelsteen Simulatie'), StringStruct(u'ProductVersion', u'%s')])]),\n" "$VERSION_STRING" "$VERSION_STRING" >> version.txt
+        printf "    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])\n" >> version.txt
+        printf "  ]\n" >> version.txt
+        printf ")\n" >> version.txt
+
+      shell: bash
+
     - name: Build with PyInstaller
       run: |
         set -ex # Exit on error, print commands
@@ -103,8 +153,12 @@ jobs:
 
         # Voeg het icoon en versie-info alleen toe aan de hoofd-applicatie
         if [[ "${{ matrix.script.name }}" == "dobbelsteen_simulatie" ]]; then
-          if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" && -f "version.py" ]]; then
-            PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico --version-file version.py"
+          if [[ "${{ runner.os }}" == "Windows" && -f "assets/dice.ico" ]]; then
+            PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.ico"
+            # Add version file only if it exists (i.e., on a tagged build)
+            if [[ -f "version.txt" ]]; then
+                PYINSTALLER_ARGS="$PYINSTALLER_ARGS --version-file version.txt"
+            fi
           # elif [[ "${{ runner.os }}" == "macOS" && -f "assets/dice.icns" ]]; then
           #   PYINSTALLER_ARGS="$PYINSTALLER_ARGS --icon=assets/dice.icns"
           fi # macOS build is disabled for now
@@ -149,8 +203,7 @@ jobs:
           file_path=$(find "$dir" -type f -print -quit)
           if [[ -z "$file_path" ]]; then continue; fi
 
-          # Construct the new, unique filename based on the directory name.
-          # e.g., "dobbelsteen_simulatie-Windows" -> "dobbelsteen_simulatie-windows.exe"
+          # Determine OS and script name from directory name.
           case "$dir" in
             *-Windows)
               os="windows"; script_name=${dir%-Windows}; ext=".exe" ;;
@@ -164,8 +217,9 @@ jobs:
               ;;
           esac
 
-          # Move and rename the file to the release-assets directory.
-          mv "$file_path" "../release-assets/${script_name}-${os}${ext}"
+          # Create OS-specific subdirectory and move the file.
+          mkdir -p "../release-assets/$os"
+          mv "$file_path" "../release-assets/$os/${script_name}${ext}"
         done
       shell: bash
 
@@ -182,4 +236,4 @@ jobs:
         make_latest: true # Markeer deze release als de 'latest'
         fail_on_unmatched_files: true # Laat de job falen als er geen bestanden zijn om te uploaden
         files: |
-          release-assets/*
+          release-assets/**

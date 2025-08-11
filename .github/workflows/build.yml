@@ -189,38 +189,45 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        path: artifacts/
+        path: artifacts/ # Download all artifacts to the 'artifacts' directory
 
-    - name: Prepare files for release
+    - name: Prepare release archives
       run: |
-        set -e # Exit immediately if a command exits with a non-zero status.
-        mkdir release-assets
+        set -ex # Exit on error, print commands
+
+        # Create staging directories for each OS to group the executables
+        mkdir -p staging/windows
+        mkdir -p staging/linux
+
+        # Go into artifacts and sort files into the correct staging directories
         cd artifacts
         for dir in *; do
           if [[ ! -d "$dir" ]]; then continue; fi
 
-          # Find the single file within the artifact directory.
           file_path=$(find "$dir" -type f -print -quit)
           if [[ -z "$file_path" ]]; then continue; fi
 
-          # Determine OS and script name from directory name.
           case "$dir" in
             *-Windows)
-              os="windows"; script_name=${dir%-Windows}; ext=".exe" ;;
+              script_name=${dir%-Windows}; ext=".exe"
+              mv "$file_path" "../staging/windows/${script_name}${ext}"
+              ;;
             *-Linux)
-              os="linux"; script_name=${dir%-Linux}; ext="" ;;
-            *-macOS)
-              os="macos"; script_name=${dir%-macOS}; ext="" ;;
+              script_name=${dir%-Linux}; ext=""
+              mv "$file_path" "../staging/linux/${script_name}${ext}"
+              ;;
             *)
               echo "Warning: Unrecognized artifact directory format: $dir"
               continue
               ;;
           esac
-
-          # Create OS-specific subdirectory and move the file.
-          mkdir -p "../release-assets/$os"
-          mv "$file_path" "../release-assets/$os/${script_name}${ext}"
         done
+        cd .. # Back to workspace root
+
+        # Create the final release directory and the archives
+        mkdir release-assets
+        (cd staging/windows && zip -r "../../release-assets/dobbelen-${{ github.ref_name }}-windows.zip" .)
+        (cd staging/linux && tar -czvf "../../release-assets/dobbelen-${{ github.ref_name }}-linux.tar.gz" .)
       shell: bash
 
     - name: Create Release and Upload Artifacts
@@ -236,4 +243,5 @@ jobs:
         make_latest: true # Markeer deze release als de 'latest'
         fail_on_unmatched_files: true # Laat de job falen als er geen bestanden zijn om te uploaden
         files: |
-          release-assets/**
+          release-assets/*.zip
+          release-assets/*.tar.gz

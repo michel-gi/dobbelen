@@ -89,6 +89,29 @@ class TestTextDatabase(unittest.TestCase):
         self.assertEqual(list(db.data.keys()), [1, 2])
         self.assertFalse(db.verwijder_tekst(99), "Moet falen voor niet-bestaande index")
 
+    def test_06_swap_items(self):
+        """Test het verwisselen van twee items."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        db.voeg_tekst_toe("Item 1")
+        db.voeg_tekst_toe("Item 2")
+        db.voeg_tekst_toe("Item 3")
+
+        # Controleer de initiële staat
+        self.assertEqual(db.get_tekst(1), "Item 1")
+        self.assertEqual(db.get_tekst(3), "Item 3")
+
+        # Wissel item 1 en 3
+        result = db.swap_items(1, 3)
+        self.assertTrue(result, "Wisselen moet succesvol zijn")
+
+        # Controleer de nieuwe staat
+        self.assertEqual(db.get_tekst(1), "Item 3")
+        self.assertEqual(db.get_tekst(2), "Item 2")  # Moet ongewijzigd zijn
+        self.assertEqual(db.get_tekst(3), "Item 1")
+
+        # Test met een niet-bestaande index
+        self.assertFalse(db.swap_items(1, 99), "Wisselen met niet-bestaande index moet falen")
+
 
 if __name__ == "__main__":
     # Dit maakt het script uitvoerbaar en start de test runner.

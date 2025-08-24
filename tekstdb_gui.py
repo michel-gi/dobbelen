@@ -5,7 +5,7 @@ Gebaseerd op tekstdb_bewerk.py.
 """
 
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 
 from database import TextDatabase
 
@@ -144,6 +144,9 @@ class TekstDbGuiApp:
         self.edit_menu.add_command(
             label="Verwijder item...", command=self.verwijder_item, accelerator="Ctrl+V", underline=0
         )
+        self.edit_menu.add_command(
+            label="Wissel items...", command=self.wissel_items, accelerator="Ctrl+X", underline=1
+        )
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Zoek...", command=self.focus_search, accelerator="Ctrl+F", underline=0)
 
@@ -167,6 +170,9 @@ class TekstDbGuiApp:
 
         self.btn_verwijder = ttk.Button(button_frame, text="Verwijder", command=self.verwijder_item)
         self.btn_verwijder.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.btn_wissel = ttk.Button(button_frame, text="Wissel", command=self.wissel_items)
+        self.btn_wissel.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Een 'spacer' om de sluiten-knop naar rechts te duwen
         spacer = ttk.Frame(button_frame)
@@ -251,6 +257,7 @@ class TekstDbGuiApp:
         self.master.bind("<Control-n>", lambda event: self.nieuw_item())
         self.master.bind("<Control-w>", lambda event: self.wijzig_item())
         self.master.bind("<Control-v>", lambda event: self.verwijder_item())
+        self.master.bind("<Control-x>", lambda event: self.wissel_items())
         self.master.bind("<Control-q>", lambda event: self.sluit_applicatie())
 
         # Bind de Delete-toets aan de verwijder-functie voor extra gebruiksgemak
@@ -380,10 +387,12 @@ class TekstDbGuiApp:
         # Update knoppen
         self.btn_wijzig["state"] = new_state
         self.btn_verwijder["state"] = new_state
+        self.btn_wissel["state"] = new_state
 
         # Update menu-items
         self.edit_menu.entryconfig("Wijzig item...", state=new_state)
         self.edit_menu.entryconfig("Verwijder item...", state=new_state)
+        self.edit_menu.entryconfig("Wissel items...", state=new_state)
 
     def _update_status_bar(self):
         """Updates de tekst in de statusbalk."""
@@ -538,6 +547,34 @@ class TekstDbGuiApp:
                 self.refresh_item_list()
             else:
                 messagebox.showerror("Fout", f"Kon item {index_nummer} niet verwijderen.")
+
+    def wissel_items(self):
+        """Wisselt het geselecteerde item met een ander item."""
+        index1 = self._get_selected_index()
+        if index1 is None:
+            messagebox.showwarning("Geen selectie", "Selecteer eerst een item om te wisselen.")
+            return
+
+        prompt = f"Wissel item {index1} met welk ander item?"
+        index2 = simpledialog.askinteger(
+            "Wissel Item", prompt, parent=self.master, minvalue=1, maxvalue=len(self.db.data)
+        )
+
+        if index2 is None:
+            return  # Gebruiker heeft geannuleerd
+
+        if index1 == index2:
+            messagebox.showinfo("Info", "Kan een item niet met zichzelf wisselen.")
+            return
+
+        if self.db.swap_items(index1, index2):
+            messagebox.showinfo("Succes", f"Items {index1} en {index2} succesvol gewisseld.")
+            self.refresh_item_list()
+        else:
+            # De check in de db class is robuuster, dus we tonen een algemene fout.
+            messagebox.showerror(
+                "Fout", f"Kon items {index1} en {index2} niet wisselen. Controleer of beide indexen bestaan."
+            )
 
     def sluit_applicatie(self):
         """Sluit de applicatie."""

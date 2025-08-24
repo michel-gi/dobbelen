@@ -100,3 +100,17 @@ class TextDatabase:
 
         # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
         return self._schrijf_bestand()
+
+    def swap_items(self, index1, index2):
+        """
+        Wisselt de teksten van twee gegeven indexnummers.
+        """
+        if index1 not in self.data or index2 not in self.data:
+            logging.warning("Een of beide indexen (%d, %d) niet gevonden voor verwisselen.", index1, index2)
+            return False
+
+        # Wissel de teksten in het geheugen
+        self.data[index1], self.data[index2] = self.data[index2], self.data[index1]
+
+        # Schrijf de gewijzigde data weg naar het bestand
+        return self._schrijf_bestand()

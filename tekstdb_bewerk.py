@@ -14,6 +14,7 @@ def toon_menu():
     print("[n]ieuw   - invoeren van een nieuw tekst item")
     print("[w]ijzig  - wijzigen van een bestaand tekst item")
     print("[v]erwijder - verwijderen van een tekst item")
+    print("[x]wissel  - wissel twee items van plaats")
     print("[s]top   - beëindig dit programma")
     print("[m]enu   - dit menu opnieuw weergeven")
 
@@ -160,11 +161,24 @@ def main():
                                         print("Ongeldige invoer. Voer 'j' of 'n' in.")
                         except ValueError:
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
+                    case "wissel" | "x":
+                        try:
+                            index1 = int(input("Voer het eerste indexnummer in: "))
+                            index2 = int(input("Voer het tweede indexnummer in: "))
+
+                            if index1 not in db.data or index2 not in db.data:
+                                print("Fout: Een of beide indexnummers zijn niet gevonden.")
+                            elif db.swap_items(index1, index2):
+                                print(f"Items {index1} en {index2} succesvol gewisseld.")
+                            else:
+                                print("Fout: Kon de items niet wisselen.")
+                        except ValueError:
+                            print("Ongeldige invoer voor indexnummer. Voer een getal in.")
                     case _:  # Handle other invalid input (including non-integer which falls through from Try)
-                        print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")
+                        print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")  # type: ignore[possibly-unbound]
 
         except ValueError:
-            print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")
+            print(f"Ongeldige invoer. '{gebruikers_invoer}' is geen geldig nummer of commando.")  # type: ignore[possibly-unbound]
 
 
 if __name__ == "__main__":

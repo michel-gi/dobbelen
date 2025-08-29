@@ -85,6 +85,12 @@ class TextEntryDialog(tk.Toplevel):
 class TekstDbGuiApp:
     """De Tkinter GUI voor de TekstDB bewerker."""
 
+    DATABASE_FILETYPES = (
+        ("Databasebestanden", "*.txt *.TXT *.dat *.DAT"),
+        ("Tekstbestanden", "*.txt"),
+        ("Alle bestanden", "*.*"),
+    )
+
     def __init__(self, master):
         """Initialiseert de applicatie."""
         self.master = master
@@ -423,7 +429,7 @@ class TekstDbGuiApp:
         """Vraagt om een bestandsnaam en creëert een nieuwe, lege database."""
         filepath = filedialog.asksaveasfilename(
             title="Nieuwe database aanmaken",
-            filetypes=(("Tekstbestanden", "*.txt"), ("Alle bestanden", "*.*")),
+            filetypes=self.DATABASE_FILETYPES,
             defaultextension=".txt",
         )
         if not filepath:
@@ -445,7 +451,7 @@ class TekstDbGuiApp:
         """Opent een bestandsdialoog om een nieuwe database te laden."""
         filepath = filedialog.askopenfilename(
             title="Open databasebestand",
-            filetypes=(("Tekstbestanden", "*.txt"), ("Alle bestanden", "*.*")),
+            filetypes=self.DATABASE_FILETYPES,
             defaultextension=".txt",
         )
         if not filepath:
@@ -470,7 +476,7 @@ class TekstDbGuiApp:
         """Opent een bestandsdialoog om de database onder een nieuwe naam op te slaan."""
         filepath = filedialog.asksaveasfilename(
             title="Database opslaan als...",
-            filetypes=(("Tekstbestanden", "*.txt"), ("Alle bestanden", "*.*")),
+            filetypes=self.DATABASE_FILETYPES,
             defaultextension=".txt",
             initialfile=self.db.bestandsnaam,
         )

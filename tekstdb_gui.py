@@ -99,6 +99,7 @@ class TekstDbGuiApp:
         # Variabele voor de zoekbalk
         self.search_var = tk.StringVar()
         self.preview_text = None  # Placeholder voor de preview widget
+        self._search_debounce_job = None  # Voor de zoek-debounce
 
         # --- Database initialisatie ---
         # We gebruiken een hardcoded bestandsnaam, dit kan later dynamisch.
@@ -197,8 +198,8 @@ class TekstDbGuiApp:
         self.search_entry = ttk.Entry(search_frame, textvariable=self.search_var)
         self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Live zoeken: update de lijst bij elke toetsaanslag
-        self.search_var.trace_add("write", self.perform_search)
+        # Gebruik debouncing voor live zoeken om UI-vertraging te voorkomen
+        self.search_var.trace_add("write", self._on_search_change)
 
         ttk.Button(search_frame, text="Wissen", command=self.clear_search).pack(side=tk.LEFT, padx=(5, 0))
 
@@ -322,6 +323,17 @@ class TekstDbGuiApp:
 
         self._populate_listbox(items_to_show)
 
+    def _on_search_change(self, *args):
+        """
+        Handelt een wijziging in het zoekveld af met debouncing.
+        De zoekopdracht wordt pas uitgevoerd nadat de gebruiker 300ms is gestopt met typen.
+        """
+        if self._search_debounce_job:
+            self.master.after_cancel(self._search_debounce_job)
+
+        # Plan de zoekopdracht om na 300ms te worden uitgevoerd
+        self._search_debounce_job = self.master.after(300, self.perform_search)
+
     def _get_selected_index(self):
         """Haalt het indexnummer op van het geselecteerde item in de listbox."""
         selection = self.item_listbox.curselection()
@@ -424,7 +436,10 @@ class TekstDbGuiApp:
     def clear_search(self):
         """Maakt de zoekbalk leeg en toont de volledige lijst."""
         self.search_var.set("")
-        # De trace op search_var zorgt ervoor dat perform_search wordt aangeroepen.
+        # Annuleer een eventuele lopende debounce-taak en voer de zoekopdracht direct uit
+        if self._search_debounce_job:
+            self.master.after_cancel(self._search_debounce_job)
+        self.perform_search()
 
     # --- Commando's (Bestand) ---
     # --- Commando's (Bestand) ---

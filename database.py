@@ -101,16 +101,31 @@ class TextDatabase:
         # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
         return self._schrijf_bestand()
 
-    def swap_items(self, index1, index2):
+    def move_item(self, source_index, dest_index):
         """
-        Wisselt de teksten van twee gegeven indexnummers.
+        Verplaatst een item van source_index naar dest_index en herindexeert.
         """
-        if index1 not in self.data or index2 not in self.data:
-            logging.warning("Een of beide indexen (%d, %d) niet gevonden voor verwisselen.", index1, index2)
+        if source_index not in self.data:
+            logging.warning("Bronindex %d niet gevonden voor verplaatsen.", source_index)
             return False
 
-        # Wissel de teksten in het geheugen
-        self.data[index1], self.data[index2] = self.data[index2], self.data[index1]
+        num_items = len(self.data)
+        if not (1 <= dest_index <= num_items):
+            logging.warning("Doelindex %d is buiten bereik (1-%d).", dest_index, num_items)
+            return False
 
-        # Schrijf de gewijzigde data weg naar het bestand
+        # Haal alle items op als een lijst van teksten, gesorteerd op index
+        items = [v for k, v in sorted(self.data.items())]
+
+        # Haal het te verplaatsen item uit de lijst
+        # De lijst is 0-geïndexeerd, de database 1-geïndexeerd
+        item_to_move = items.pop(source_index - 1)
+
+        # Voeg het item in op de nieuwe positie
+        items.insert(dest_index - 1, item_to_move)
+
+        # Bouw de dictionary opnieuw op met een compacte, nieuwe index
+        self.data = {i: text for i, text in enumerate(items, 1)}
+
+        # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
         return self._schrijf_bestand()

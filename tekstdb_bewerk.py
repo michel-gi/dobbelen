@@ -14,7 +14,7 @@ def toon_menu():
     print("[n]ieuw   - invoeren van een nieuw tekst item")
     print("[w]ijzig  - wijzigen van een bestaand tekst item")
     print("[v]erwijder - verwijderen van een tekst item")
-    print("[x]wissel  - wissel twee items van plaats")
+    print("[p]laats   - verplaats een item naar een nieuwe positie")
     print("[s]top   - beëindig dit programma")
     print("[m]enu   - dit menu opnieuw weergeven")
 
@@ -161,17 +161,19 @@ def main():
                                         print("Ongeldige invoer. Voer 'j' of 'n' in.")
                         except ValueError:
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
-                    case "wissel" | "x":
+                    case "plaats" | "p":
                         try:
-                            index1 = int(input("Voer het eerste indexnummer in: "))
-                            index2 = int(input("Voer het tweede indexnummer in: "))
-
-                            if index1 not in db.data or index2 not in db.data:
-                                print("Fout: Een of beide indexnummers zijn niet gevonden.")
-                            elif db.swap_items(index1, index2):
-                                print(f"Items {index1} en {index2} succesvol gewisseld.")
+                            source_index = int(input("Voer het indexnummer in van het item om te verplaatsen: "))
+                            if source_index not in db.data:
+                                print(f"Fout: Bronindex {source_index} niet gevonden.")
                             else:
-                                print("Fout: Kon de items niet wisselen.")
+                                dest_index = int(
+                                    input(f"Voer de nieuwe positie in voor item {source_index} (1-{len(db.data)}): ")
+                                )
+                                if db.move_item(source_index, dest_index):
+                                    print(f"Item {source_index} succesvol verplaatst naar positie {dest_index}.")
+                                else:
+                                    print("Fout: Kon het item niet verplaatsen. Controleer of de doelindex geldig is.")
                         except ValueError:
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
                     case _:  # Handle other invalid input (including non-integer which falls through from Try)

@@ -89,28 +89,32 @@ class TestTextDatabase(unittest.TestCase):
         self.assertEqual(list(db.data.keys()), [1, 2])
         self.assertFalse(db.verwijder_tekst(99), "Moet falen voor niet-bestaande index")
 
-    def test_06_swap_items(self):
-        """Test het verwisselen van twee items."""
+    def test_06_move_item(self):
+        """Test het verplaatsen van een item en de daaropvolgende herindexering."""
         db = TextDatabase(self.test_db_file, create_new=True)
         db.voeg_tekst_toe("Item 1")
         db.voeg_tekst_toe("Item 2")
         db.voeg_tekst_toe("Item 3")
+        db.voeg_tekst_toe("Item 4")
 
-        # Controleer de initiële staat
+        # Verplaats item 2 naar positie 4
+        self.assertTrue(db.move_item(2, 4))
         self.assertEqual(db.get_tekst(1), "Item 1")
-        self.assertEqual(db.get_tekst(3), "Item 3")
+        self.assertEqual(db.get_tekst(2), "Item 3")
+        self.assertEqual(db.get_tekst(3), "Item 4")
+        self.assertEqual(db.get_tekst(4), "Item 2")
 
-        # Wissel item 1 en 3
-        result = db.swap_items(1, 3)
-        self.assertTrue(result, "Wisselen moet succesvol zijn")
-
-        # Controleer de nieuwe staat
+        # Verplaats item 1 (nu "Item 1") naar positie 3
+        self.assertTrue(db.move_item(1, 3))
         self.assertEqual(db.get_tekst(1), "Item 3")
-        self.assertEqual(db.get_tekst(2), "Item 2")  # Moet ongewijzigd zijn
+        self.assertEqual(db.get_tekst(2), "Item 4")
         self.assertEqual(db.get_tekst(3), "Item 1")
+        self.assertEqual(db.get_tekst(4), "Item 2")
 
-        # Test met een niet-bestaande index
-        self.assertFalse(db.swap_items(1, 99), "Wisselen met niet-bestaande index moet falen")
+        # Test met ongeldige indexen
+        self.assertFalse(db.move_item(99, 1), "Verplaatsen met niet-bestaande bronindex moet falen")
+        self.assertFalse(db.move_item(1, 99), "Verplaatsen naar niet-bestaande doelindex moet falen")
+        self.assertFalse(db.move_item(1, 0), "Verplaatsen naar ongeldige doelindex (0) moet falen")
 
 
 if __name__ == "__main__":

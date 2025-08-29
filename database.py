@@ -20,6 +20,7 @@ class TextDatabase:
                                het bestand al bestaat. Het bestand wordt bij de
                                eerste schrijf-actie overschreven.
         """
+        self.dirty = False
         self.bestandsnaam = bestandsnaam
         if create_new:
             self.data = {}
@@ -52,7 +53,7 @@ class TextDatabase:
                 geindexeerde_data[index_nummer] = tekst
         return geindexeerde_data
 
-    def _schrijf_bestand(self):
+    def save(self):
         """Interne methode om de volledige dataset naar het bestand te schrijven."""
         try:
             with open(self.bestandsnaam, "w", encoding="utf-8") as f:
@@ -61,6 +62,7 @@ class TextDatabase:
                     f.write(f"###INDEX: {index}\n")
                     f.write(tekst)
                     f.write("\n\n")
+            self.dirty = False
             return True
         except OSError as e:
             logging.error("Fout bij schrijven naar '%s': %s", self.bestandsnaam, e)
@@ -74,13 +76,15 @@ class TextDatabase:
         """Voegt een nieuwe tekst toe met de volgende beschikbare index en slaat op."""
         volgende_index = max(self.data.keys()) + 1 if self.data else 1
         self.data[volgende_index] = tekst
-        return self._schrijf_bestand()
+        self.dirty = True
+        return True
 
     def wijzig_tekst(self, index_nummer, nieuwe_tekst):
         """Wijzigt de tekst voor een gegeven indexnummer."""
         if index_nummer in self.data:
             self.data[index_nummer] = nieuwe_tekst
-            return self._schrijf_bestand()
+            self.dirty = True
+            return True
         return False
 
     def verwijder_tekst(self, index_nummer):
@@ -98,8 +102,8 @@ class TextDatabase:
         # Bouw een compleet nieuwe dictionary op met een compacte, nieuwe index
         self.data = {i: text for i, text in enumerate(sorted_values, 1)}
 
-        # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
-        return self._schrijf_bestand()
+        self.dirty = True
+        return True
 
     def move_item(self, source_index, dest_index):
         """
@@ -127,5 +131,5 @@ class TextDatabase:
         # Bouw de dictionary opnieuw op met een compacte, nieuwe index
         self.data = {i: text for i, text in enumerate(items, 1)}
 
-        # Schrijf de nieuwe, geherindexeerde data weg naar het bestand
-        return self._schrijf_bestand()
+        self.dirty = True
+        return True

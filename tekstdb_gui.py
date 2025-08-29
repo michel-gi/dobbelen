@@ -118,10 +118,12 @@ class TekstDbGuiApp:
         self.bind_keys()
         # Laad de data in de lijst bij het opstarten
         self.refresh_item_list()
+        self._update_ui_state()
 
     def _update_title(self):
         """Updates the window title with the current database filename."""
-        self.master.title(f"TekstDB Bewerker - {self.db.bestandsnaam}")
+        dirty_marker = "*" if self.db.dirty else ""
+        self.master.title(f"TekstDB Bewerker - {self.db.bestandsnaam}{dirty_marker}")
 
     def create_menu(self):
         """Maakt de menubalk voor de applicatie."""
@@ -256,6 +258,7 @@ class TekstDbGuiApp:
         self.item_listbox.bind("<Double-1>", lambda event: self.wijzig_item())
 
         # Update de knopstatus en preview wanneer de selectie verandert.
+        # <<ListboxSelect>> wordt geactiveerd door zowel muisklikken als pijltjestoetsen.
         # <<ListboxSelect>> wordt geactiveerd door zowel muisklikken als pijltjestoetsen.
         self.item_listbox.bind("<<ListboxSelect>>", self._on_selection_change)
         self.item_listbox.bind("<KeyRelease-Up>", self._force_selection_on_arrow)
@@ -424,6 +427,7 @@ class TekstDbGuiApp:
         # De trace op search_var zorgt ervoor dat perform_search wordt aangeroepen.
 
     # --- Commando's (Bestand) ---
+    # --- Commando's (Bestand) ---
 
     def new_database(self):
         """Vraagt om een bestandsnaam en creëert een nieuwe, lege database."""
@@ -449,6 +453,9 @@ class TekstDbGuiApp:
 
     def open_database(self):
         """Opent een bestandsdialoog om een nieuwe database te laden."""
+        if not self._check_unsaved_changes():
+            return
+
         filepath = filedialog.askopenfilename(
             title="Open databasebestand",
             filetypes=self.DATABASE_FILETYPES,
@@ -459,7 +466,6 @@ class TekstDbGuiApp:
 
         try:
             self.db = TextDatabase(filepath)
-            self._update_title()
             self.refresh_item_list()
             messagebox.showinfo("Succes", f"Database '{filepath}' succesvol geladen.")
         except Exception as e:
@@ -467,10 +473,13 @@ class TekstDbGuiApp:
 
     def save_database(self):
         """Slaat de huidige database op naar het huidige bestand."""
-        if self.db._schrijf_bestand():
+        if self.db.save():
             messagebox.showinfo("Succes", f"Wijzigingen opgeslagen in '{self.db.bestandsnaam}'.")
+            self._update_ui_state()
+            return True
         else:
             messagebox.showerror("Fout bij opslaan", f"Kon de database niet opslaan naar '{self.db.bestandsnaam}'.")
+            return False
 
     def save_database_as(self):
         """Opent een bestandsdialoog om de database onder een nieuwe naam op te slaan."""
@@ -485,9 +494,9 @@ class TekstDbGuiApp:
 
         # Update de bestandsnaam in het database-object en sla het op
         self.db.bestandsnaam = filepath
-        if self.db._schrijf_bestand():
-            self._update_title()
+        if self.db.save():
             messagebox.showinfo("Succes", f"Database succesvol opgeslagen als '{filepath}'.")
+            self._update_ui_state()
         else:
             messagebox.showerror("Fout bij opslaan", f"Kon de database niet opslaan naar '{filepath}'.")
 
@@ -500,6 +509,7 @@ class TekstDbGuiApp:
             if self.db.voeg_tekst_toe(nieuwe_tekst):
                 messagebox.showinfo("Succes", "Nieuw item succesvol toegevoegd.")
                 self.refresh_item_list()
+                self._update_ui_state()
             else:
                 messagebox.showerror("Fout", "Kon het nieuwe item niet opslaan in het bestand.")
         # Geen bericht nodig bij annuleren; de gebruiker weet dit.
@@ -537,6 +547,7 @@ class TekstDbGuiApp:
         if self.db.wijzig_tekst(index_nummer, nieuwe_tekst):
             messagebox.showinfo("Succes", f"Item {index_nummer} succesvol gewijzigd.")
             self.refresh_item_list()
+            self._update_ui_state()
         else:
             messagebox.showerror("Fout", f"Kon item {index_nummer} niet wijzigen.")
 
@@ -558,6 +569,7 @@ class TekstDbGuiApp:
                     "Succes", f"Item {index_nummer} succesvol verwijderd.\nDe database is geherindexeerd."
                 )
                 self.refresh_item_list()
+                self._update_ui_state()
             else:
                 messagebox.showerror("Fout", f"Kon item {index_nummer} niet verwijderen.")
 
@@ -588,6 +600,7 @@ class TekstDbGuiApp:
             self.item_listbox.selection_set(dest_index - 1)
             self.item_listbox.see(dest_index - 1)
             self._perform_selection_update()
+            self._update_ui_state()
         else:
             messagebox.showerror(
                 "Fout", f"Kon item {source_index} niet verplaatsen. Controleer of de doelindex geldig is."
@@ -595,13 +608,39 @@ class TekstDbGuiApp:
 
     def sluit_applicatie(self):
         """Sluit de applicatie."""
-        self.master.quit()
+        if self._check_unsaved_changes():
+            self.master.quit()
+
+    def _check_unsaved_changes(self):
+        """
+        Controleert op niet-opgeslagen wijzigingen en vraagt de gebruiker wat te doen.
+        Geeft True terug als de actie mag doorgaan, False als de gebruiker annuleert.
+        """
+        if not self.db.dirty:
+            return True  # Veilig om door te gaan
+
+        response = messagebox.askyesnocancel(
+            "Niet-opgeslagen wijzigingen",
+            f"Er zijn niet-opgeslagen wijzigingen in '{self.db.bestandsnaam}'.\n"
+            "Wilt u de wijzigingen opslaan voordat u doorgaat?",
+            parent=self.master,
+        )
+
+        if response is True:  # Ja
+            return self.save_database()
+        return response is not None  # True voor Nee (doorgaan), False voor Annuleren
 
     def show_about(self):
         """Toont het 'Over' dialoogvenster."""
         messagebox.showinfo(
             "Over TekstDB Bewerker", "TekstDB Bewerker v0.1\n\nEen GUI voor het beheren van tekst-databases."
         )
+
+    def _update_ui_state(self):
+        """Werkt alle UI-elementen bij die de databasestatus weerspiegelen."""
+        self._update_title()
+        self._update_status_bar()
+        self._update_button_states()
 
 
 def main():

@@ -14,6 +14,7 @@ def toon_menu():
     print("[n]ieuw   - invoeren van een nieuw tekst item")
     print("[w]ijzig  - wijzigen van een bestaand tekst item")
     print("[v]erwijder - verwijderen van een tekst item")
+    print("[o]pslaan  - sla de wijzigingen op")
     print("[p]laats   - verplaats een item naar een nieuwe positie")
     print("[s]top   - beëindig dit programma")
     print("[m]enu   - dit menu opnieuw weergeven")
@@ -86,6 +87,19 @@ def main():
             except ValueError:  # Not a valid number, check for commands
                 match invoer_lower:
                     case "stop" | "s":
+                        if db.dirty:
+                            while True:
+                                bevestiging = input(
+                                    "Er zijn niet-opgeslagen wijzigingen. Opslaan voor het stoppen? (j/n): "
+                                ).lower()
+                                if bevestiging.startswith("j"):
+                                    if not db.save():
+                                        print("Fout: Kon de database niet opslaan.")
+                                        continue  # Blijf in de while-lus, vraag opnieuw
+                                    print("Wijzigingen opgeslagen.")
+                                    break
+                                elif bevestiging.startswith("n"):
+                                    break
                         break
 
                     case "menu" | "m":
@@ -102,7 +116,7 @@ def main():
 
                         nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
                         if db.voeg_tekst_toe(nieuwe_tekst):
-                            print("Tekst succesvol toegevoegd.")
+                            print("Tekst succesvol toegevoegd (nog niet opgeslagen).")
                             print(f"Totaal aantal items in de database nu: {len(db.data)}")
                         else:
                             print("Fout: Kon de nieuwe tekst niet opslaan.")
@@ -126,7 +140,10 @@ def main():
                                     nieuwe_tekst_regels.append(regel)
                                 nieuwe_tekst = "\n".join(nieuwe_tekst_regels)
                                 if db.wijzig_tekst(index_nummer, nieuwe_tekst):
-                                    print(f"Tekst voor index {index_nummer} succesvol gewijzigd.")
+                                    bericht = (
+                                        f"Tekst voor index {index_nummer} succesvol gewijzigd (nog niet opgeslagen)."
+                                    )
+                                    print(bericht)
                                 else:
                                     print(f"Fout: Kon tekst voor index {index_nummer} niet wijzigen.")
                         except ValueError:
@@ -149,7 +166,7 @@ def main():
                                     )
                                     if bevestiging.lower().startswith("j"):
                                         if db.verwijder_tekst(index_nummer):
-                                            print(f"Item {index_nummer} succesvol verwijderd.")
+                                            print(f"Item {index_nummer} succesvol verwijderd (nog niet opgeslagen).")
                                             print(f"Totaal aantal items in de database nu: {len(db.data)}")
                                         else:
                                             print(f"Fout: Kon item {index_nummer} niet verwijderen.")
@@ -161,6 +178,12 @@ def main():
                                         print("Ongeldige invoer. Voer 'j' of 'n' in.")
                         except ValueError:
                             print("Ongeldige invoer voor indexnummer. Voer een getal in.")
+                    case "opslaan" | "o":
+                        if db.save():
+                            print("Database succesvol opgeslagen.")
+                        else:
+                            print("Fout: Kon de database niet opslaan.")
+
                     case "plaats" | "p":
                         try:
                             source_index = int(input("Voer het indexnummer in van het item om te verplaatsen: "))
@@ -171,7 +194,11 @@ def main():
                                     input(f"Voer de nieuwe positie in voor item {source_index} (1-{len(db.data)}): ")
                                 )
                                 if db.move_item(source_index, dest_index):
-                                    print(f"Item {source_index} succesvol verplaatst naar positie {dest_index}.")
+                                    bericht = (
+                                        f"Item {source_index} succesvol verplaatst naar "
+                                        f"positie {dest_index} (nog niet opgeslagen)."
+                                    )
+                                    print(bericht)
                                 else:
                                     print("Fout: Kon het item niet verplaatsen. Controleer of de doelindex geldig is.")
                         except ValueError:

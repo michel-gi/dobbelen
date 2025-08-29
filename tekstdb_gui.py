@@ -200,24 +200,30 @@ class TekstDbGuiApp:
 
         # --- Frame voor de lijst en scrollbar (bovenste paneel) ---
         list_frame = ttk.Frame(paned_window)
-        paned_window.add(list_frame, weight=4)  # Geef de lijst meer initieel gewicht (groter)
+        paned_window.add(list_frame, weight=4)
 
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(list_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # Configureer grid layout voor de list_frame om beide scrollbars te plaatsen
+        list_frame.grid_rowconfigure(0, weight=1)
+        list_frame.grid_columnconfigure(0, weight=1)
+
+        # Verticale Scrollbar
+        v_scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Horizontale Scrollbar
+        h_scrollbar = ttk.Scrollbar(list_frame, orient=tk.HORIZONTAL)
+        h_scrollbar.grid(row=1, column=0, sticky="ew")
 
         # Listbox voor de items
         self.item_listbox = tk.Listbox(
             list_frame,
-            yscrollcommand=scrollbar.set,
             selectmode=tk.SINGLE,
             exportselection=False,
             height=25,  # Stel een initiële hoogte in (in tekstregels)
+            yscrollcommand=v_scrollbar.set,
+            xscrollcommand=h_scrollbar.set,
         )
-        self.item_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Koppel scrollbar aan listbox
-        scrollbar["command"] = self.item_listbox.yview
+        self.item_listbox.grid(row=0, column=0, sticky="nsew")
 
         # --- Frame voor de preview (onderste paneel) ---
         preview_frame = ttk.Frame(paned_window)
@@ -234,7 +240,11 @@ class TekstDbGuiApp:
             height=8,  # Stel een initiële hoogte in (in tekstregels)
         )
         self.preview_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        preview_scrollbar["command"] = self.preview_text.yview
+
+        # Koppel scrollbars aan widgets
+        v_scrollbar["command"] = self.item_listbox.yview
+        h_scrollbar["command"] = self.item_listbox.xview
+        preview_scrollbar["command"] = self.preview_text.yview  # pyright: ignore[reportOptionalMemberAccess]
 
         # Voeg dubbelklik-event toe om een item te wijzigen
         self.item_listbox.bind("<Double-1>", lambda event: self.wijzig_item())
@@ -242,8 +252,6 @@ class TekstDbGuiApp:
         # Update de knopstatus en preview wanneer de selectie verandert.
         # <<ListboxSelect>> wordt geactiveerd door zowel muisklikken als pijltjestoetsen.
         self.item_listbox.bind("<<ListboxSelect>>", self._on_selection_change)
-        # Forceer de selectie om de 'actieve' cursor (stippellijn) te volgen bij gebruik van pijltjestoetsen.
-        # Dit zorgt ervoor dat <<ListboxSelect>> ook consistent wordt geactiveerd.
         self.item_listbox.bind("<KeyRelease-Up>", self._force_selection_on_arrow)
         self.item_listbox.bind("<KeyRelease-Down>", self._force_selection_on_arrow)
 
@@ -283,7 +291,6 @@ class TekstDbGuiApp:
             # Sorteer op index en vul de lijst
             for index, tekst in sorted(items_to_display.items()):
                 preview = tekst.replace("\n", " ").strip()
-                preview = (preview[:75] + "...") if len(preview) > 75 else preview
                 self.item_listbox.insert(tk.END, f"{index: >3}: {preview}")
 
         self._update_button_states()

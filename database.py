@@ -27,7 +27,10 @@ class TextDatabase:
             logging.info("Nieuwe, lege database '%s' wordt aangemaakt.", self.bestandsnaam)
         else:
             self.data = self._lees_bestand()
-            logging.info("Database '%s' geladen. %d items gevonden.", self.bestandsnaam, len(self.data))
+            self._reindex_if_needed()
+            logging.info(
+                "Database '%s' geladen en geverifieerd. %d items gevonden.", self.bestandsnaam, len(self.data)
+            )
 
     def _lees_bestand(self):
         """
@@ -52,6 +55,27 @@ class TextDatabase:
                 tekst = match.group(2).strip()
                 geindexeerde_data[index_nummer] = tekst
         return geindexeerde_data
+
+    def _reindex_if_needed(self):
+        """
+        Herindexeert de database als de sleutels geen aaneengesloten reeks vanaf 1 vormen.
+
+        Dit zorgt voor een consistente interne staat na het laden van een bestand,
+        wat efficiëntere manipulaties mogelijk maakt.
+        """
+        if not self.data:
+            return
+
+        keys = sorted(self.data.keys())
+        # Controleer of de sleutels al een perfecte reeks zijn (1, 2, 3, ..., N)
+        if keys == list(range(1, len(keys) + 1)):
+            return  # Al aaneengesloten, geen actie nodig.
+
+        # De sleutels zijn niet aaneengesloten, dus we moeten herindexeren.
+        sorted_values = [self.data[k] for k in keys]
+        self.data = {i: text for i, text in enumerate(sorted_values, 1)}
+        self.dirty = True
+        logging.info("Database geherindexeerd omdat de indices niet aaneensluitend waren.")
 
     def save(self):
         """Interne methode om de volledige dataset naar het bestand te schrijven."""
@@ -83,14 +107,16 @@ class TextDatabase:
             logging.warning("Doelindex %d is buiten bereik (1-%d).", index, len(self.data) + 1)
             return False
 
-        # Haal alle items op als een lijst van teksten, gesorteerd op index
-        items = [v for k, v in sorted(self.data.items())]
+        # Omdat de sleutels gegarandeerd aaneengesloten zijn (1..N), kunnen we de
+        # lijst efficiënter opbouwen zonder te sorteren. Dit is een O(N) operatie.
+        items = [self.data[i] for i in range(1, len(self.data) + 1)]
 
         # Voeg het item in op de nieuwe positie
         # De lijst is 0-geïndexeerd, de database 1-geïndexeerd
         items.insert(index - 1, tekst)
 
-        # Bouw de dictionary opnieuw op met een compacte, nieuwe index
+        # Bouw de dictionary opnieuw op met een compacte, nieuwe index.
+        # Dit is ook een O(N) operatie.
         self.data = {i: text for i, text in enumerate(items, 1)}
         self.dirty = True
         return True
@@ -110,13 +136,14 @@ class TextDatabase:
         if index_nummer not in self.data:
             return False
 
-        # Verwijder het gevraagde item
-        del self.data[index_nummer]
+        # Bouw een lijst van alle waarden (O(N)).
+        items = [self.data[i] for i in range(1, len(self.data) + 1)]
 
-        # Haal de overgebleven teksten, gesorteerd op hun oude index
-        sorted_values = [v for k, v in sorted(self.data.items())]
-        # Bouw een compleet nieuwe dictionary op met een compacte, nieuwe index
-        self.data = {i: text for i, text in enumerate(sorted_values, 1)}
+        # Verwijder het item uit de lijst (O(N)).
+        del items[index_nummer - 1]
+
+        # Bouw de dictionary opnieuw op met een compacte, nieuwe index (O(N)).
+        self.data = {i: text for i, text in enumerate(items, 1)}
 
         self.dirty = True
         return True
@@ -134,8 +161,9 @@ class TextDatabase:
             logging.warning("Doelindex %d is buiten bereik (1-%d).", dest_index, num_items)
             return False
 
-        # Haal alle items op als een lijst van teksten, gesorteerd op index
-        items = [v for k, v in sorted(self.data.items())]
+        # Omdat de sleutels gegarandeerd aaneengesloten zijn (1..N), kunnen we de
+        # lijst efficiënter opbouwen zonder te sorteren (O(N)).
+        items = [self.data[i] for i in range(1, num_items + 1)]
 
         # Haal het te verplaatsen item uit de lijst
         # De lijst is 0-geïndexeerd, de database 1-geïndexeerd

@@ -4,6 +4,7 @@ Een GUI-applicatie voor het bewerken van tekst-databases.
 Gebaseerd op tekstdb_bewerk.py.
 """
 
+import argparse
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -91,7 +92,7 @@ class TekstDbGuiApp:
         ("Alle bestanden", "*.*"),
     )
 
-    def __init__(self, master):
+    def __init__(self, master, filepath=None):
         """Initialiseert de applicatie."""
         self.master = master
         master.geometry("800x600")  # Startgrootte (iets groter voor de preview)
@@ -106,8 +107,8 @@ class TekstDbGuiApp:
         self._drop_indicator = None
 
         # --- Database initialisatie ---
-        # We gebruiken een hardcoded bestandsnaam, dit kan later dynamisch.
-        self.db = TextDatabase("mijn_tekstdatabase.txt")
+        db_file = filepath or "mijn_tekstdatabase.txt"
+        self.db = TextDatabase(db_file)
         self._update_title()
 
         # Hoofdframe
@@ -763,8 +764,17 @@ class TekstDbGuiApp:
 
 def main():
     """Start de applicatie."""
+    parser = argparse.ArgumentParser(description="Een GUI-applicatie voor het bewerken van tekst-databases.")
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="filepath",
+        help="Pad naar het te openen databasebestand.",
+    )
+    args = parser.parse_args()
+
     root = tk.Tk()
-    TekstDbGuiApp(root)
+    TekstDbGuiApp(root, filepath=args.filepath)
     root.mainloop()
 
 

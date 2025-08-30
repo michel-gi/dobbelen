@@ -5,7 +5,7 @@ Gebaseerd op tekstdb_bewerk.py.
 """
 
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import filedialog, messagebox, ttk
 
 from database import TextDatabase
 
@@ -100,6 +100,10 @@ class TekstDbGuiApp:
         self.search_var = tk.StringVar()
         self.preview_text = None  # Placeholder voor de preview widget
         self._search_debounce_job = None  # Voor de zoek-debounce
+        # Variabelen voor drag-and-drop
+        self._clipboard_item = None
+        self._drag_source_index = None
+        self._drop_indicator = None
 
         # --- Database initialisatie ---
         # We gebruiken een hardcoded bestandsnaam, dit kan later dynamisch.
@@ -151,10 +155,12 @@ class TekstDbGuiApp:
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Wijzig item...", command=self.wijzig_item, accelerator="Ctrl+W", underline=0)
         self.edit_menu.add_command(
-            label="Verwijder item...", command=self.verwijder_item, accelerator="Ctrl+V", underline=0
+            label="Verwijder item...", command=self.verwijder_item, accelerator="Del", underline=0
         )
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label="Knippen", command=self.cut_item, accelerator="Ctrl+X", underline=2)
         self.edit_menu.add_command(
-            label="Verplaats item...", command=self.verplaats_item, accelerator="Ctrl+X", underline=1
+            label="Plakken", command=self.paste_item, accelerator="Ctrl+V", underline=1, state=tk.DISABLED
         )
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Zoek...", command=self.focus_search, accelerator="Ctrl+F", underline=0)
@@ -179,9 +185,6 @@ class TekstDbGuiApp:
 
         self.btn_verwijder = ttk.Button(button_frame, text="Verwijder", command=self.verwijder_item)
         self.btn_verwijder.pack(side=tk.LEFT, padx=5, pady=5)
-
-        self.btn_verplaats = ttk.Button(button_frame, text="Verplaats", command=self.verplaats_item)
-        self.btn_verplaats.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Een 'spacer' om de sluiten-knop naar rechts te duwen
         spacer = ttk.Frame(button_frame)
@@ -274,12 +277,17 @@ class TekstDbGuiApp:
         self.master.bind("<Control-S>", lambda event: self.save_database_as())  # Control-Shift-S
         self.master.bind("<Control-n>", lambda event: self.nieuw_item())
         self.master.bind("<Control-w>", lambda event: self.wijzig_item())
-        self.master.bind("<Control-v>", lambda event: self.verwijder_item())
-        self.master.bind("<Control-x>", lambda event: self.verplaats_item())
+        self.master.bind("<Control-x>", lambda event: self.cut_item())
+        self.master.bind("<Control-v>", lambda event: self.paste_item())
         self.master.bind("<Control-q>", lambda event: self.sluit_applicatie())
 
         # Bind de Delete-toets aan de verwijder-functie voor extra gebruiksgemak
         self.master.bind("<Delete>", lambda event: self.verwijder_item())
+
+        # Bind drag-and-drop events
+        self.item_listbox.bind("<Button-1>", self._on_drag_start)
+        self.item_listbox.bind("<B1-Motion>", self._on_drag_motion)
+        self.item_listbox.bind("<ButtonRelease-1>", self._on_drag_release)
 
     # --- Data-operaties ---
 
@@ -348,6 +356,17 @@ class TekstDbGuiApp:
         except (ValueError, IndexError):
             return None  # Mocht er iets misgaan met de parsing
 
+    def _get_db_index_from_list_index(self, list_index):
+        """Haalt het database-indexnummer op van een item op een gegeven listbox-index."""
+        if list_index < 0 or list_index >= self.item_listbox.size():
+            return None
+        line = self.item_listbox.get(list_index)
+        try:
+            index_str = line.split(":", 1)[0].strip()
+            return int(index_str)
+        except (ValueError, IndexError):
+            return None
+
     def _force_selection_on_arrow(self, event=None):
         """
         Werkt de selectie bij om overeen te komen met het actieve item (focus met stippellijn).
@@ -415,12 +434,10 @@ class TekstDbGuiApp:
         # Update knoppen
         self.btn_wijzig["state"] = new_state
         self.btn_verwijder["state"] = new_state
-        self.btn_verplaats["state"] = new_state
 
         # Update menu-items
         self.edit_menu.entryconfig("Wijzig item...", state=new_state)
         self.edit_menu.entryconfig("Verwijder item...", state=new_state)
-        self.edit_menu.entryconfig("Verplaats item...", state=new_state)
 
     def _update_status_bar(self):
         """Updates de tekst in de statusbalk."""
@@ -588,38 +605,122 @@ class TekstDbGuiApp:
             else:
                 messagebox.showerror("Fout", f"Kon item {index_nummer} niet verwijderen.")
 
-    def verplaats_item(self):
-        """Verplaatst het geselecteerde item naar een nieuwe positie."""
-        source_index = self._get_selected_index()
-        if source_index is None:
-            messagebox.showwarning("Geen selectie", "Selecteer eerst een item om te verplaatsen.")
+    def cut_item(self, event=None):
+        """Knipt het geselecteerde item naar het klembord."""
+        index_nummer = self._get_selected_index()
+        if index_nummer is None:
             return
 
-        prompt = f"Verplaats item {source_index} naar welke nieuwe positie (1-{len(self.db.data)})?"
-        dest_index = simpledialog.askinteger(
-            "Verplaats Item", prompt, parent=self.master, minvalue=1, maxvalue=len(self.db.data)
-        )
+        # Sla de data van het te knippen item op
+        tekst = self.db.get_tekst(index_nummer)
+        self._clipboard_item = {"text": tekst}
 
-        if dest_index is None:
-            return  # Gebruiker heeft geannuleerd
-
-        if source_index == dest_index:
-            messagebox.showinfo("Info", "Item staat al op deze positie.")
-            return
-
-        if self.db.move_item(source_index, dest_index):
-            messagebox.showinfo("Succes", f"Item {source_index} succesvol verplaatst naar positie {dest_index}.")
+        # Verwijder het item uit de database
+        if self.db.verwijder_tekst(index_nummer):
             self.refresh_item_list()
-            # Selecteer het item op zijn nieuwe positie voor visuele feedback
-            self.item_listbox.selection_clear(0, tk.END)
-            self.item_listbox.selection_set(dest_index - 1)
-            self.item_listbox.see(dest_index - 1)
-            self._perform_selection_update()
             self._update_ui_state()
         else:
-            messagebox.showerror(
-                "Fout", f"Kon item {source_index} niet verplaatsen. Controleer of de doelindex geldig is."
-            )
+            # Dit zou niet moeten gebeuren als we net de index hebben gekregen
+            messagebox.showerror("Fout", f"Kon item {index_nummer} niet knippen.")
+            self._clipboard_item = None  # Maak klembord leeg bij fout
+            self._update_ui_state()
+
+    def paste_item(self, event=None):
+        """Plakt het geknipte item op de geselecteerde positie."""
+        if not self._clipboard_item:
+            return
+
+        selection = self.item_listbox.curselection()
+        if selection:
+            # Plak voor het geselecteerde item
+            list_index = selection[0]
+            dest_db_index = self._get_db_index_from_list_index(list_index)
+            if dest_db_index is None:  # Mocht er iets misgaan
+                dest_db_index = len(self.db.data) + 1
+        else:
+            # Plak aan het einde als er niets is geselecteerd
+            dest_db_index = len(self.db.data) + 1
+
+        tekst_to_paste = self._clipboard_item["text"]
+        if self.db.voeg_tekst_op_index_toe(dest_db_index, tekst_to_paste):
+            self._clipboard_item = None  # Maak klembord leeg na plakken
+            self.refresh_item_list()
+            self.item_listbox.selection_set(dest_db_index - 1)
+            self.item_listbox.see(dest_db_index - 1)
+            self._update_ui_state()
+        else:
+            messagebox.showerror("Fout", "Kon het item niet plakken.")
+
+    def _on_drag_start(self, event):
+        """Start van een drag-and-drop operatie."""
+        list_index = self.item_listbox.nearest(event.y)
+        if list_index != -1:
+            self._drag_source_index = list_index
+            self.item_listbox.selection_clear(0, tk.END)
+            self.item_listbox.selection_set(list_index)
+            self.item_listbox.activate(list_index)
+
+    def _on_drag_motion(self, event):
+        """Handelt de beweging tijdens drag-and-drop af."""
+        if self._drag_source_index is None:
+            return
+
+        dest_list_index = self.item_listbox.nearest(event.y)
+        if dest_list_index == -1:
+            if self._drop_indicator:
+                self._drop_indicator.place_forget()
+            return
+
+        if not self._drop_indicator:
+            self._drop_indicator = tk.Frame(self.item_listbox, height=2, bg="blue", relief=tk.SOLID)
+
+        item_bbox = self.item_listbox.bbox(dest_list_index)
+        if item_bbox:
+            indicator_y = item_bbox[1]
+            midpoint = indicator_y + item_bbox[3] / 2
+            if event.y > midpoint:
+                indicator_y += item_bbox[3]
+
+            self._drop_indicator.place(x=0, y=indicator_y - 1, width=self.item_listbox.winfo_width(), height=2)
+
+    def _on_drag_release(self, event):
+        """Handelt het loslaten van de muisknop na drag-and-drop af."""
+        if self._drag_source_index is None:
+            return
+
+        if self._drop_indicator:
+            self._drop_indicator.place_forget()
+
+        source_list_index = self._drag_source_index
+        self._drag_source_index = None  # Reset drag state
+
+        dest_list_index = self.item_listbox.nearest(event.y)
+        if dest_list_index == -1 or dest_list_index == source_list_index:
+            return  # Geen verplaatsing nodig
+
+        source_db_index = self._get_db_index_from_list_index(source_list_index)
+        if source_db_index is None:
+            return
+
+        # Bepaal de uiteindelijke positie in de lijst (0-gebaseerd)
+        item_bbox = self.item_listbox.bbox(dest_list_index)
+        final_list_index = dest_list_index
+        if item_bbox and event.y > (item_bbox[1] + item_bbox[3] / 2):
+            final_list_index += 1
+
+        # Corrigeer de doel-index voor de `pop` operatie in `move_item`
+        if source_list_index < final_list_index:
+            target_insert_index = final_list_index - 1
+        else:
+            target_insert_index = final_list_index
+
+        dest_db_index = target_insert_index + 1
+
+        if self.db.move_item(source_db_index, dest_db_index):
+            self.refresh_item_list()
+            self.item_listbox.selection_set(target_insert_index)
+            self.item_listbox.see(target_insert_index)
+            self._update_ui_state()
 
     def sluit_applicatie(self):
         """Sluit de applicatie."""
@@ -656,6 +757,8 @@ class TekstDbGuiApp:
         self._update_title()
         self._update_status_bar()
         self._update_button_states()
+        paste_state = tk.NORMAL if self._clipboard_item else tk.DISABLED
+        self.edit_menu.entryconfig("Plakken", state=paste_state)
 
 
 def main():

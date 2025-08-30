@@ -116,6 +116,29 @@ class TestTextDatabase(unittest.TestCase):
         self.assertFalse(db.move_item(1, 99), "Verplaatsen naar niet-bestaande doelindex moet falen")
         self.assertFalse(db.move_item(1, 0), "Verplaatsen naar ongeldige doelindex (0) moet falen")
 
+    def test_07_add_at_index(self):
+        """Test het toevoegen van een item op een specifieke index."""
+        db = TextDatabase(self.test_db_file, create_new=True)
+        db.voeg_tekst_toe("Item A")
+        db.voeg_tekst_toe("Item C")
+
+        # Voeg "Item B" in op index 2
+        self.assertTrue(db.voeg_tekst_op_index_toe(2, "Item B"))
+        self.assertEqual(len(db.data), 3)
+        self.assertEqual(db.get_tekst(1), "Item A")
+        self.assertEqual(db.get_tekst(2), "Item B")
+        self.assertEqual(db.get_tekst(3), "Item C")
+
+        # Voeg "Item D" toe aan het einde
+        self.assertTrue(db.voeg_tekst_op_index_toe(4, "Item D"))
+        self.assertEqual(db.get_tekst(4), "Item D")
+
+        # Voeg "Item 0" toe aan het begin
+        self.assertTrue(db.voeg_tekst_op_index_toe(1, "Item 0"))
+        self.assertEqual(db.get_tekst(1), "Item 0")
+        self.assertEqual(db.get_tekst(2), "Item A")
+        self.assertEqual(len(db.data), 5)
+
 
 if __name__ == "__main__":
     # Dit maakt het script uitvoerbaar en start de test runner.

@@ -73,9 +73,25 @@ class TextDatabase:
         return self.data.get(index_nummer)
 
     def voeg_tekst_toe(self, tekst):
-        """Voegt een nieuwe tekst toe met de volgende beschikbare index en slaat op."""
-        volgende_index = max(self.data.keys()) + 1 if self.data else 1
-        self.data[volgende_index] = tekst
+        """Voegt een nieuwe tekst toe aan het einde van de database en herindexeert."""
+        # De index is 1-gebaseerd, dus len(self.data) + 1 is de nieuwe laatste positie.
+        return self.voeg_tekst_op_index_toe(len(self.data) + 1, tekst)
+
+    def voeg_tekst_op_index_toe(self, index, tekst):
+        """Voegt een tekst toe op een specifieke index en herindexeert."""
+        if not (1 <= index <= len(self.data) + 1):
+            logging.warning("Doelindex %d is buiten bereik (1-%d).", index, len(self.data) + 1)
+            return False
+
+        # Haal alle items op als een lijst van teksten, gesorteerd op index
+        items = [v for k, v in sorted(self.data.items())]
+
+        # Voeg het item in op de nieuwe positie
+        # De lijst is 0-geïndexeerd, de database 1-geïndexeerd
+        items.insert(index - 1, tekst)
+
+        # Bouw de dictionary opnieuw op met een compacte, nieuwe index
+        self.data = {i: text for i, text in enumerate(items, 1)}
         self.dirty = True
         return True
 

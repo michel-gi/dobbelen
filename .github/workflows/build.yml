@@ -49,7 +49,7 @@ jobs:
       run: python tekstdb_tester.py
 
   build:
-    needs: lint # Zorg ervoor dat de tests eerst slagen
+    needs: test # Zorg ervoor dat de tests eerst slagen
     # Gebruik een matrix om de job op meerdere besturingssystemen te draaien
     strategy:
       matrix:

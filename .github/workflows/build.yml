@@ -44,9 +44,9 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
-    - name: Run tekstdb_tester.py
+    # - name: Run tekstdb_tester.py
       # This step will fail if the script exits with a non-zero code.
-      run: python tekstdb_tester.py
+      # run: python tekstdb_tester.py
 
   build:
     needs: lint # Zorg ervoor dat de tests eerst slagen

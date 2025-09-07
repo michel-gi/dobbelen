@@ -49,16 +49,20 @@ class TestTextDatabase(unittest.TestCase):
         """Test het toevoegen van een item en het schrijven naar het bestand."""
         db = TextDatabase(self.test_db_file, create_new=True)
         tekst1 = "Dit is de eerste testtekst."
-        result = db.voeg_tekst_toe(tekst1)
-        self.assertTrue(result, "Schrijven naar bestand moet succesvol zijn")
+        db.voeg_tekst_toe(tekst1)  # Werkt nu alleen in-memory
+
+        # Expliciet opslaan en het resultaat daarvan controleren
+        result = db.save()
+        self.assertTrue(result, "Opslaan naar bestand moet succesvol zijn")
         self.assertEqual(len(db.data), 1)
         self.assertEqual(db.get_tekst(1), tekst1)
-        self.assertTrue(os.path.exists(self.test_db_file), "Bestand moet bestaan na schrijven")
+        self.assertTrue(os.path.exists(self.test_db_file), "Bestand moet bestaan na opslaan")
 
     def test_03_read_from_existing_file(self):
         """Test of data correct wordt geladen uit een bestaand bestand."""
         db1 = TextDatabase(self.test_db_file, create_new=True)
         db1.voeg_tekst_toe("Data om te bewaren")
+        db1.save()  # Expliciet opslaan is nu nodig voordat een andere instance kan lezen.
         db2 = TextDatabase(self.test_db_file, create_new=False)
         self.assertEqual(len(db2.data), 1)
         self.assertEqual(db2.get_tekst(1), "Data om te bewaren")
@@ -111,10 +115,18 @@ class TestTextDatabase(unittest.TestCase):
         self.assertEqual(db.get_tekst(3), "Item 1")
         self.assertEqual(db.get_tekst(4), "Item 2")
 
-        # Test met ongeldige indexen
-        self.assertFalse(db.move_item(99, 1), "Verplaatsen met niet-bestaande bronindex moet falen")
-        self.assertFalse(db.move_item(1, 99), "Verplaatsen naar niet-bestaande doelindex moet falen")
-        self.assertFalse(db.move_item(1, 0), "Verplaatsen naar ongeldige doelindex (0) moet falen")
+        # Test met ongeldige indexen en vang de verwachte waarschuwingen op
+        with self.assertLogs(level="WARNING") as cm:
+            self.assertFalse(db.move_item(99, 1), "Verplaatsen met niet-bestaande bronindex moet falen")
+            self.assertIn("Bronindex 99 niet gevonden", cm.records[0].getMessage())
+
+        with self.assertLogs(level="WARNING") as cm:
+            self.assertFalse(db.move_item(1, 99), "Verplaatsen naar niet-bestaande doelindex moet falen")
+            self.assertIn("Doelindex 99 is buiten bereik", cm.records[0].getMessage())
+
+        with self.assertLogs(level="WARNING") as cm:
+            self.assertFalse(db.move_item(1, 0), "Verplaatsen naar ongeldige doelindex (0) moet falen")
+            self.assertIn("Doelindex 0 is buiten bereik", cm.records[0].getMessage())
 
     def test_07_add_at_index(self):
         """Test het toevoegen van een item op een specifieke index."""
@@ -138,6 +150,15 @@ class TestTextDatabase(unittest.TestCase):
         self.assertEqual(db.get_tekst(1), "Item 0")
         self.assertEqual(db.get_tekst(2), "Item A")
         self.assertEqual(len(db.data), 5)
+
+        # Test met ongeldige indexen en vang de verwachte waarschuwingen op
+        with self.assertLogs(level="WARNING") as cm:
+            self.assertFalse(db.voeg_tekst_op_index_toe(0, "Zal falen"), "Toevoegen op index 0 moet falen")
+            self.assertIn("Doelindex 0 is buiten bereik", cm.records[0].getMessage())
+
+        with self.assertLogs(level="WARNING") as cm:
+            self.assertFalse(db.voeg_tekst_op_index_toe(7, "Zal ook falen"), "Toevoegen buiten bereik moet falen")
+            self.assertIn("Doelindex 7 is buiten bereik", cm.records[0].getMessage())
 
 
 if __name__ == "__main__":

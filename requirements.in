@@ -1,5 +1,6 @@
 # Top-level dependencies voor het project
-numpy
-matplotlib
 pyinstaller
 ruff
+numpy
+matplotlib
+pip-tools

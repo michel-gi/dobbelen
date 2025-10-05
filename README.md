@@ -80,8 +80,8 @@ If you prefer to build the applications yourself, you can do so by following the
 2. **Set up a virtual environment (recommended):**
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
     ```
 
 3. **Install the dependencies:**

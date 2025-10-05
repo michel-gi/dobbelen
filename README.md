@@ -6,31 +6,11 @@ A collection of Python tools for simulating dice rolls and analyzing the resulti
 
 This project consists of several standalone applications:
 
-### GUI Applications
-
 * **`dobbelsteen_simulatie`**: The main application for running various dice roll simulations and visualizing the outcomes. It includes an icon and version information.
 * **`vergelijk_verdelingen`**:  A tool to visually compare different probability distributions generated from simulations.
 * **`plot_eindpunt_kansen`**:  An application to plot the probabilities of final outcomes in multi-step simulations.
-* **`tekstdb_gui`**: A graphical user interface for managing the text database.
-
-### Console Applications
-
-* **`tekstdb_bewerk`**: A command-line tool for managing the text-based database (`database.py`) used by the applications.
-* **`tekstdb_tester`**: A utility to test the integrity and functionality of the text database.
 
 ## Core Components
-
-### `database.py` - The Text Database
-
-At the heart of several applications in this project is a simple, custom-built text database managed by the `TextDatabase` class in `database.py`.
-
-* **Purpose**: To provide a lightweight, human-readable way to store and manage indexed blocks of text in a single file.
-* **Format**: It uses a simple format where each entry is preceded by a unique `###INDEX: <number>` marker.
-* **Functionality**: The class handles all the necessary operations:
-  * Reading and parsing the database file.
-  * Adding, modifying, and deleting entries.
-  * Automatically re-indexing entries when one is removed to maintain a compact index.
-* **Usage**: This component is used by the `tekstdb_bewerk` and `tekstdb_tester` console applications to manage and verify the data.
 
 ### `dobbel_utils.py` - Calculation Utilities
 
@@ -105,11 +85,8 @@ If you prefer to build the applications yourself, you can do so by following the
     To build a specific script, you can run one of the following commands:
 
     ```bash
-    # For a GUI application like dobbelsteen_simulatie
+    # Example for the main GUI application
     pyinstaller --onefile --windowed --hidden-import PIL._tkinter_finder dobbelsteen_simulatie.py
-
-    # For a console application like tekstdb_bewerk
-    pyinstaller --onefile --console tekstdb_bewerk.py
     ```
 
     The resulting executable will be located in the `dist/` directory.
@@ -120,6 +97,6 @@ This project uses GitHub Actions for Continuous Integration and Continuous Deplo
 
 1. Jobs are initiated for Windows, macOS, and Linux environments.
 2. All Python dependencies from `requirements.txt` are installed.
-3. PyInstaller builds executables for all five scripts on each operating system.
+3. PyInstaller builds executables for all scripts on each operating system.
 4. The built executables are uploaded as artifacts.
 5. A new GitHub Release is automatically created and tagged with the current timestamp, attaching all the cross-platform executables as downloadable assets.

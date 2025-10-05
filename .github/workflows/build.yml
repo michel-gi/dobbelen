@@ -27,29 +27,9 @@ jobs:
         # The --check flag on the format command will fail the job if files need reformatting.
         run: ruff check . && ruff format --check .
 
-  test:
-    name: Run database tests
-    needs: lint # Zorg ervoor dat de linter eerst slaagt
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Run tekstdb_tester.py
-      # This step will fail if the script exits with a non-zero code.
-      run: python tekstdb_tester.py
-
   build:
-    needs: test # Zorg ervoor dat de tests eerst slagen
+    name: Build executables
+    needs: lint # Zorg ervoor dat de linter eerst slaagt
     # Gebruik een matrix om de job op meerdere besturingssystemen te draaien
     strategy:
       matrix:
@@ -61,12 +41,6 @@ jobs:
             type: gui
           - name: plot_eindpunt_kansen
             type: gui
-          - name: tekstdb_gui
-            type: gui
-          - name: tekstdb_bewerk
-            type: console
-          - name: tekstdb_tester
-            type: console
 
     runs-on: ${{ matrix.os }}
 
